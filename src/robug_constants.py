@@ -114,7 +114,12 @@ class constants:
     # gain for direction change
     # test successfull -> right curve
     # _GAIT_FWD_GAIN = [3.0, 1.0, 1.0, 0.4]
-    _GAIT_FWD_GAIN = [1.0, 1.0, 1.0, 1.0]    
+    _GAIT_FWD_GAIN = [1.0, 1.0, 1.0, 1.0]
+    
+    # y-delta for every phase of turning at the spot
+    _GAIT_TURN_Y = 8
+    # x-delta for every phase of turning at the spot
+    _GAIT_TURN_X = 25
     
     # offset between diagonal legs for symmetric trott gait
     _GAIT_PHASE_OFFSET = (_GAIT_SUPPORT_TICKS + _GAIT_SWING_TICKS) / 2
