@@ -114,29 +114,70 @@ class rbmocon:
         # save foot positions
         for i in range(4):
             lTmpPos.append(r.lLeg[i].foot_pos.to_list())
-            
-        for i in range(14):                    
-            # push
-            lRelPos = [v3(0, 0,  -1*yjump), v3(     0, 0, -1*yjump), v3(     0, 0, -1*yjump), v3(0, 0,  -1*yjump)]
-            await r.set_positions_relative(lRelPos, 5)                    
-            # push and turn
-            lRelPos = [v3(0, 0,  2*yjump), v3( xturn, 0, -1*yjump), v3(-xturn, 0, -1*yjump), v3(0, 0,  2*yjump)]        
-            await r.set_positions_relative(lRelPos, 6) 
-            # land
-            lRelPos = [v3(0, 0, -1*yjump), v3(     0, 0,  2*yjump), v3(     0, 0,  2*yjump), v3(0, 0, -1*yjump)]
-            await r.set_positions_relative(lRelPos, 8) 
-            await asyncio.sleep_ms(100)
+                            
+        # push
+        lRelPos = [v3(0, 0,  -1*yjump), v3(     0, 0, -1*yjump), v3(     0, 0, -1*yjump), v3(0, 0,  -1*yjump)]
+        await r.set_positions_relative(lRelPos, 5)                    
+        # push and turn
+        lRelPos = [v3(0, 0,  2*yjump), v3( xturn, 0, -1*yjump), v3(-xturn, 0, -1*yjump), v3(0, 0,  2*yjump)]        
+        await r.set_positions_relative(lRelPos, 6) 
+        # land
+        lRelPos = [v3(0, 0, -1*yjump), v3(     0, 0,  2*yjump), v3(     0, 0,  2*yjump), v3(0, 0, -1*yjump)]
+        await r.set_positions_relative(lRelPos, 8) 
+        await asyncio.sleep_ms(100)
 
-            # lift tips before moving them on x axis
-            lRelPos = [v3(0, 0, 0), v3(     0, 0,  1*yjump), v3(    0, 0,  1*yjump), v3(0, 0, 0)]
-            await r.set_positions_relative(lRelPos, 5)                 
-            # lift and restore initial x position
-            lRelPos = [v3(0, 0, 0), v3(-xturn, 0,  2*yjump), v3(xturn, 0,  2*yjump), v3(0, 0, 0)]        
-            await r.set_positions_relative(lRelPos, 6) 
-            # make ground contact
-            lRelPos = [v3(0, 0, 0), v3(     0, 0, -3*yjump), v3(    0, 0, -3*yjump), v3(0, 0, 0)]        
-            await r.set_positions_relative(lRelPos, 8)         
-            await asyncio.sleep_ms(100)
+        # lift tips before moving them on x axis
+        lRelPos = [v3(0, 0, 0), v3(     0, 0,  1*yjump), v3(    0, 0,  1*yjump), v3(0, 0, 0)]
+        await r.set_positions_relative(lRelPos, 5)                 
+        # lift and restore initial x position
+        lRelPos = [v3(0, 0, 0), v3(-xturn, 0,  2*yjump), v3(xturn, 0,  2*yjump), v3(0, 0, 0)]        
+        await r.set_positions_relative(lRelPos, 6) 
+        # make ground contact
+        lRelPos = [v3(0, 0, 0), v3(     0, 0, -3*yjump), v3(    0, 0, -3*yjump), v3(0, 0, 0)]        
+        await r.set_positions_relative(lRelPos, 8)         
+        await asyncio.sleep_ms(100)
+        
+        #restore foot positions
+        for i in range(4):
+            r.lLeg[i].foot_pos.set_from_list(lTmpPos[i])
+        r.set_positions(None)            
+
+        self.bAcceptNewCmd = True
+        com.command_complete()
+        
+    async def turn_r(self):
+        r = self.r
+        com = self.com
+        lTmpPos = []
+        
+        yjump = c._GAIT_TURN_Y
+        xturn = c._GAIT_TURN_X
+        
+        # save foot positions
+        for i in range(4):
+            lTmpPos.append(r.lLeg[i].foot_pos.to_list())
+                                
+        # push
+        lRelPos = [v3(     0, 0, -1*yjump), v3(0, 0, -1*yjump), v3(0, 0, -1*yjump), v3(     0, 0, -1*yjump)]
+        await r.set_positions_relative(lRelPos, 5)                    
+        # push and turn
+        lRelPos = [v3(-xturn, 0, -1*yjump), v3(0, 0,  2*yjump), v3(0, 0,  2*yjump), v3( xturn, 0, -1*yjump)]        
+        await r.set_positions_relative(lRelPos, 6) 
+        # land
+        lRelPos = [v3(     0, 0,  2*yjump), v3(0, 0, -1*yjump), v3(0, 0, -1*yjump), v3(     0, 0,  2*yjump)]
+        await r.set_positions_relative(lRelPos, 8) 
+        await asyncio.sleep_ms(100)
+
+        # lift tips before moving them on x axis
+        lRelPos = [v3(     0, 0,  1*yjump), v3(0, 0, 0), v3(0, 0, 0), v3(     0, 0,  1*yjump)]
+        await r.set_positions_relative(lRelPos, 5)                 
+        # lift and restore initial x position
+        lRelPos = [v3( xturn, 0,  2*yjump), v3(0, 0, 0), v3(0, 0, 0), v3(-xturn, 0,  2*yjump)]        
+        await r.set_positions_relative(lRelPos, 6) 
+        # make ground contact
+        lRelPos = [v3(     0, 0, -3*yjump), v3(0, 0, 0), v3(0, 0, 0), v3(     0, 0, -3*yjump)]        
+        await r.set_positions_relative(lRelPos, 8)         
+        await asyncio.sleep_ms(100)
         
         #restore foot positions
         for i in range(4):
@@ -173,6 +214,8 @@ class rbmocon:
             elif strCmd == '_cmd_STOP_STEP_':  self.stop_step()
                         
             elif strCmd == '_cmd_TURN_LFT_':   await self.turn_l()
+            
+            elif strCmd == '_cmd_TURN_RGT_':   await self.turn_r()            
 
             elif strCmd == '_cmd_EXIT_':
                 
