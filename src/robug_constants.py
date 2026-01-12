@@ -62,7 +62,7 @@ class constants:
     # ref: shoulder joint
     # +z points up, -z points down
     # golden: -110
-    _GAIT_HEIGHT = -110
+    _GAIT_HEIGHT = -100
     # low gait - quick
     # _GAIT_HEIGHT = -75
     
@@ -76,7 +76,7 @@ class constants:
     # linear movement phase in ticks
     # golden: 64    
     # _GAIT_SUPPORT_TICKS = 5*_GAIT_SWING_TICKS
-    _GAIT_SUPPORT_TICKS = 60
+    _GAIT_SUPPORT_TICKS = 54
     # low gait - quick
     # _GAIT_SUPPORT_TICKS = 48    
     
@@ -117,9 +117,9 @@ class constants:
     _GAIT_FWD_GAIN = [1.0, 1.0, 1.0, 1.0]
     
     # y-delta for every phase of turning at the spot
-    _GAIT_TURN_Y = 8
+    _GAIT_TURN_Y = 9
     # x-delta for every phase of turning at the spot
-    _GAIT_TURN_X = 25
+    _GAIT_TURN_X = 27.5
     
     # offset between diagonal legs for symmetric trott gait
     _GAIT_PHASE_OFFSET = (_GAIT_SUPPORT_TICKS + _GAIT_SWING_TICKS) / 2
@@ -141,4 +141,7 @@ class constants:
     # FR: inherent +x is away from body , so fwd -> no correction req., DIR =  1
     # RR: inherent +x is away from body , so bwd -> correction req.,    DIR = -1        
     _LEG_DIR = [ 1, -1,  1, -1]
+    
+    # LED control
+    _LED_PWM_FREQ = 1000
     

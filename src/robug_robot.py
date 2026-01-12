@@ -1,9 +1,11 @@
 import math
 import asyncio
+from time import sleep_ms
+from machine import Pin, PWM, I2C
+from tof_sensor import vl53l0x
 from robug_utils import v3
 from robug_constants import constants as c
 from robug_leg import rbleg
-from time import sleep_ms
 
 ############################
 ## class robot
@@ -16,6 +18,46 @@ class robug:
         self.dirX  = 1
         self.dirZ  = 1
         self.lLegTicks =[[], [], [], []]
+        
+        # touch sensor setup
+        self.touch_top = Pin(0, Pin.IN)
+        self.touch_bot = Pin(1, Pin.IN)
+        
+        # distance sensor setup
+        self.vl53 = vl53l0x(I2C(0, sda=Pin(20), scl=Pin(21), freq=400000))
+        self.vl53.stop_continuous()
+        
+        # led setup
+        self.freq = c._LED_PWM_FREQ
+        self.dc = 50
+        self.led_grn = Pin(4)
+        self.led_red = Pin(5)
+        self.pwm_red = PWM(self.led_red)
+        self.pwm_grn = PWM(self.led_grn)
+        self.pwm_red.freq(self.freq)
+        self.pwm_grn.freq(self.freq)
+        
+        # led init
+        self.pwm_grn.duty_u16(pow(2,16)-1)
+        self.pwm_red.duty_u16(0)
+        
+    def get_touch_top(self):
+        return self.touch_top.value()
+    
+    def get_touch_bot(self):
+        return self.touch_bot.value()     
+        
+    def get_distance(self):
+        return self.vl53.range        
+        
+    def duty(self, pct):
+        return int((pct * pow(2,16))/100)
+
+    def set_brightness_red(self, pct):
+        self.pwm_red.duty_u16(self.duty(pct))
+        
+    def set_brightness_grn(self, pct):
+        self.pwm_grn.duty_u16(self.duty(pct))
 
     def create_robug(self):
         self.lLeg = [rbleg(0), rbleg(1), rbleg(2), rbleg(3)]
