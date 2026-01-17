@@ -43,7 +43,7 @@ class constants:
     _SERVO_SGN = [  1,  -1,  -1,   1,  -1,   1,   1,  -1]
     
     # servo calibration for neutral stance in ticks (90° joint angles)
-    _SERVO_CAL = [ 15,   0,  20, -55, -35,   0, -20,  20]
+    _SERVO_CAL = [ 75,   20,  20, -55, -35,   0, -20, -50]
     
     # servo gain correction
     _SERVO_GAIN = [1.00, 1.00, 1.00, 1.03, 1.00, 0.97, 1.00, 0.97]
@@ -56,6 +56,9 @@ class constants:
     
     # effective tibia length axis to bottom of foot (0 force on suspension)
     _L_TIBIA = 111.6
+    
+    # distance hip joint from body centre (for body IK)
+    _DIST_PIVOT_TO_HIP = v3(  37.0, 0, -5.5)
     
     # pre-calculated valkues for ik solver
     _L_FEMUR_PWR2 = _L_FEMUR**2

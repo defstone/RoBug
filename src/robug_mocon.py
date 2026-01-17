@@ -33,7 +33,64 @@ class rbmocon:
         self.bAcceptNewCmd = True
         self.iPhase = 1
         self.State = ''
+        
+    def sign(self, num):
+        return -1 if num < 0 else 1        
+        
+    def rotate_point_center(self, p, theta):
+        # Calculate cosine and sine of the angle
+        cos_theta = math.cos(theta)
+        sin_theta = math.sin(theta)
+        tmp = v3()
+        # Apply rotation matrix
+        tmp.x = p.x * cos_theta - p.z * sin_theta
+        tmp.z = p.x * sin_theta + p.z * cos_theta
+        return tmp
 
+    def rotate_point_point(self, p, o, a):
+        # Translate point to origin
+        p.sub(o)
+        # Rotate using the same formula
+        tmp = self.rotate_point_center(p, math.radians(a))
+        # Translate back to original position
+        return tmp.add(o)
+    
+    async def rotate_body(self, theta):
+        r = self.r
+        com = self.com
+        sign = self.sign(theta)
+        
+        # determin vector from pivot to foot position
+        lOF = []
+        for i in range(4):
+            tmp = r.lLeg[i].foot_pos
+            tmp.add(c._DIST_PIVOT_TO_HIP)
+            lOF.append(tmp)
+        
+        for a in range(abs(theta)):
+            # rotate foor position vector relative to body in opposite direction
+            r.lLeg[0].foot_pos = self.rotate_point_point(lOF[0], v3(0,0,0),  a * sign)
+            r.lLeg[1].foot_pos = self.rotate_point_point(lOF[1], v3(0,0,0), -a * sign)
+            r.lLeg[2].foot_pos = self.rotate_point_point(lOF[2], v3(0,0,0),  a * sign)
+            r.lLeg[3].foot_pos = self.rotate_point_point(lOF[3], v3(0,0,0), -a * sign)
+            
+            for i in range(4):
+                # the ik solver solv3es reative to hip joint
+                # so cal new foot position relative to hip joint
+                r.lLeg[i].foot_pos.sub(c._DIST_PIVOT_TO_HIP)
+                # solve foot position
+                r.lLeg[i].solve()               
+            
+            for i in range(4):
+                # set joint to new joint angles
+                r.lLeg[i].set_joints()
+            
+            # wait until foot position update done
+            await asyncio.sleep_ms(10)
+            
+        self.bAcceptNewCmd = True
+        com.command_complete()         
+         
     def start_step(self):
         r = self.r
         com = self.com
@@ -98,7 +155,37 @@ class rbmocon:
                 self.bRunLoop = False  
                 self.bAcceptNewCmd = True
                 com.command_complete()
-                                      
+                
+    async def lift_legs(self):
+        r = self.r
+        com = self.com
+        lRelPos = [v3(  0,   0,  40), v3(  0,   0,  40), v3(  0,   0,  40), v3(  0,   0,  40)]
+        await r.set_positions_relative(lRelPos, 10)
+        self.bAcceptNewCmd = True
+        com.command_complete()
+        
+    async def push_legs(self):
+        r = self.r
+        com = self.com        
+        lRelPos = [v3(  0,   0, -40), v3(  0,   0, -40), v3(  0,   0, -40), v3(  0,   0, -40)]
+        await r.set_positions_relative(lRelPos, 28)
+        await asyncio.sleep(0.5)
+        self.bAcceptNewCmd = True
+        com.command_complete()
+        
+    async def purr(self):
+        r = self.r
+        com = self.com
+        for i in range(15):
+            lRelPos = [v3(  0,   0,  -2), v3(  0,   0,  -2), v3(  0,   0,  -2), v3(  0,   0,  -2)]
+            await r.set_positions_relative(lRelPos, 2)            
+            await asyncio.sleep_ms(5)
+            lRelPos = [v3(  0,   0,   2), v3(  0,   0,   2), v3(  0,   0,   2), v3(  0,   0,   2)]
+            await r.set_positions_relative(lRelPos, 2)            
+            await asyncio.sleep_ms(5)
+        self.bAcceptNewCmd = True
+        com.command_complete()            
+            
     async def attack(self):
         r = self.r
         com = self.com
@@ -230,7 +317,17 @@ class rbmocon:
                         
             elif strCmd == '_cmd_TURN_LFT_':   await self.turn_l()
             
-            elif strCmd == '_cmd_TURN_RGT_':   await self.turn_r()            
+            elif strCmd == '_cmd_TURN_RGT_':   await self.turn_r()
+            
+            elif strCmd == '_cmd_LIFT_LEGS_':  await self.lift_legs()
+            
+            elif strCmd == '_cmd_PUSH_LEGS_':  await self.push_legs()
+            
+            elif strCmd == '_cmd_PURR_':       await self.purr()
+            
+            elif strCmd == '_cmd_ROTATE_DN_': await self.rotate_body( 5)
+            
+            elif strCmd == '_cmd_ROTATE_UP_': await self.rotate_body(-5)
 
             elif strCmd == '_cmd_EXIT_':
                 

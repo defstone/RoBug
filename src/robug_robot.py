@@ -56,11 +56,19 @@ class robug:
         self.pwm_grn.duty_u16(pow(2,16)-1)
         self.pwm_red.duty_u16(0)
         
-    def get_touch_top(self):
-        return self.touch_top.value()
+    def touch_top(self):
+        tmp = self.touch_top.value()
+        if tmp == 1:
+            return True
+        else:
+            return False
     
-    def get_touch_bot(self):
-        return self.touch_bot.value()     
+    def touch_bot(self):
+        tmp = self.touch_bot.value()
+        if tmp == 1:
+            return True
+        else:
+            return False    
         
     def get_distance(self):
         return self.vl53.range        

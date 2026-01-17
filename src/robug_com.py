@@ -75,6 +75,26 @@ class rbcom:
             
         elif strMsg == 'TURN_RGT':
             strCmd = '_cmd_TURN_RGT_'
+            strSubCmd = '_cmd_NA_'
+            
+        elif strMsg == 'LIFT_LEGS':
+            strCmd = '_cmd_LIFT_LEGS_'
+            strSubCmd = '_cmd_NA_'
+            
+        elif strMsg == 'PUSH_LEGS':
+            strCmd = '_cmd_PUSH_LEGS_'
+            strSubCmd = '_cmd_NA_'
+
+        elif strMsg == 'PURR':
+            strCmd = '_cmd_PURR_'
+            strSubCmd = '_cmd_NA_'
+            
+        elif strMsg == 'LOOK_DOWN':
+            strCmd = '_cmd_ROTATE_DN_'
+            strSubCmd = '_cmd_NA_'
+            
+        elif strMsg == 'LOOK_UP':
+            strCmd = '_cmd_ROTATE_UP_'
             strSubCmd = '_cmd_NA_'            
             
         elif strMsg == 'SIT_DOWN':

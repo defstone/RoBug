@@ -29,6 +29,7 @@ class v3:
         self.x += A.x
         self.y += A.y
         self.z += A.z
+        return(self)
 
     def sub(self, A):
         self.x -= A.x

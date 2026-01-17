@@ -27,12 +27,6 @@ from robug_robot import robug
 from robug_mocon import rbmocon
 from tof_sensor import vl53l0x
 
-async def read_touch_sensors():
-    while True:
-        print(r.get_touch_top())
-        print(r.get_touch_bot())
-        await asyncio.sleep(1)
-
 async def pulse_leds():
     # green led starts at duty=100%
     i = 90
@@ -65,43 +59,12 @@ async def send_cmd(strCMD):
     reply = await wait_for_reply()
     if reply == 'DONE': return True
     else: return False
-    
-# example supervisor
-# simple linear sequence of commands
-async def supervisor():
-    
-    await send_cmd('RESUME_FWD')       
-    await asyncio.sleep(0.25)    
-    await send_cmd('STOP_POSE_FWD')    
-    await asyncio.sleep(1)
-    
-    for i in range(7):
-        await send_cmd('TURN_LFT')    
-    await asyncio.sleep(1)    
-    
-    await send_cmd('START_POSE_FWD')        
-    await send_cmd('RESUME_FWD')    
-    await asyncio.sleep(4)    
-
-    await send_cmd('STOP_POSE_FWD')    
-    await asyncio.sleep(1)
-    
-    for i in range(7):    
-        await send_cmd('TURN_RGT')
-    await asyncio.sleep(1)          
-        
-    await send_cmd('START_POSE_FWD')
-    await send_cmd('RESUME_FWD')
-    await asyncio.sleep(4)    
-
-    await send_cmd('STOP_POSE_FWD')       
-    await asyncio.sleep(1)    
-    print(r.lLeg[0].foot_pos, r.lLeg[1].foot_pos)
  
 # simple room explorer
 # walks straight until obstacle detected
 # then search for exit by turning in an arbitrary direction
 # note that the I2C distance sensor driver is synchronous, i.e. blocking
+
 async def get_distance():
     tmp = 0
     for i in range(3):
@@ -111,35 +74,89 @@ async def get_distance():
     print(tmp)
     return(tmp)
 
+async def stop_to_walk_fwd():
+    await send_cmd('START_POSE_FWD')            
+    await send_cmd('RESUME_FWD')
+    
+async def walk_fwd_to_lift_legs():
+    await send_cmd('STOP_POSE_FWD')            
+    await send_cmd('LIFT_LEGS')
+    await asyncio.sleep(1)
+    await send_cmd('PURR')
+    
+async def lifted_legs_to_walk_fwd():
+    await send_cmd('PUSH_LEGS')
+    await stop_to_walk_fwd()            
+
 async def explorer():
     # initialize random number generator
     random.seed()
     
-    # initialize random number generator    
+    # set up variables    
     min_dist = 225
     hysteresis = 100
     keep_direction = False
     avoid = False
+    picked_up = False
     dist = 1000.0
     
     # init Robug
     await send_cmd('RESUME_FWD')
     await asyncio.sleep(0.25)
     await send_cmd('STOP_POSE_FWD')
-    await asyncio.sleep(1)    
-
+    await asyncio.sleep(1)
+    
+#     for i in range(5):
+#         await send_cmd('LOOK_DOWN')
+#         await asyncio.sleep(0.1)        
+#         
+#     await asyncio.sleep(1)
+#     
+#     for i in range(10):
+#         await send_cmd('LOOK_UP')
+#         await asyncio.sleep(0.1)
+#         
+#     await asyncio.sleep(1)   
+#         
+#     for i in range(5):
+#         await send_cmd('LOOK_DOWN')
+#         await asyncio.sleep(0.1)
+#         
+#     await asyncio.sleep(3)          
+    
+    # let's go
     while True:
+        await stop_to_walk_fwd()
         
-        await send_cmd('START_POSE_FWD')            
-        await send_cmd('RESUME_FWD')
-        
+        # stop when back and belly touched
         while dist > min_dist:
-            await asyncio.sleep(0.5)
-            dist = await get_distance()
+            if not picked_up:
+                dist = await get_distance()
+            else:
+                dist = 42424242
+            
+            if (not picked_up) and r.touch_top() and r.touch_bot():
+                await walk_fwd_to_lift_legs()
+                picked_up = True
+                
+            if picked_up and (not r.touch_top()) and (not r.touch_bot()):
+                await lifted_legs_to_walk_fwd()
+                picked_up = False
+                
+            if not picked_up and (not r.touch_top()) and (not r.touch_bot()):
+                number = random.randint(0, 500)
+                if number == 5:
+                    await walk_fwd_to_lift_legs()
+                    sleeptime = random.randint(20,180)
+                    print(number, sleeptime)
+                    await asyncio.sleep(sleeptime)
+                    await lifted_legs_to_walk_fwd()
+                    
+            await asyncio.sleep(0.20)
                 
         print(dist)
         avoid = True        
-        await send_cmd('STOP_POSE_FWD')    
+        await send_cmd('STOP_POSE_FWD')
         await asyncio.sleep(0.25)
                 
         if keep_direction == False:
@@ -174,21 +191,18 @@ async def main():
 
     # start any sensor related tasks that need to run concurrently
     task2 = asyncio.create_task(pulse_leds())
-    task3 = asyncio.create_task(read_touch_sensors())
     
     # start the supervisor (example above). This could be a task that
     # handles bluetooth remote control, a task to control RoBug depending
     # on sensor readings etc.
-    # The supervisor/exlporer task send commands through the MsgQueue to the
-    # RoBug motion control message Server (MCMS). The MCMS will reply with
+    # The supervisor/exlporer task sends commands through the MsgQueue to the
+    # RoBug motion control message server (MCMS). The MCMS will reply with
     # 'DONE' when a command completed. It will only look for new commands
     # after completion of the previous command
     task4 = asyncio.create_task(explorer())
-    
     await task4
     task1.cancel()
     task2.cancel()
-    task3.cancel()
 
 if __name__ == "__main__":
     
@@ -205,7 +219,7 @@ if __name__ == "__main__":
     MsgQueue  = deque([], 4)
     RplyQueue = deque([], 4)
     m = rbmocon(r, MsgQueue, RplyQueue)
-
+    
     # start tasks
     asyncio.run(main())
     
