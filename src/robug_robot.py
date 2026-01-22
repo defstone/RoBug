@@ -34,6 +34,13 @@ class robug:
         self.dirZ  = 1
         self.lLegTicks =[[], [], [], []]
         
+        # CoM shift
+        self.com_loop_length = c._GAIT_SEGMENTS * c._GAIT_SWING_TICKS
+        self.com_cycle_quarter = (self.com_loop_length / 4)
+        self.com_cycle_period  = self.com_cycle_quarter * 2
+        # max com shift in middle of swing phase
+        self.com_phase_shift = ((c._GAIT_SWING_TICKS * 0.5) / self.com_cycle_period) * 2 * math.pi
+        
         # touch sensor setup
         self.touch_top = Pin(0, Pin.IN)
         self.touch_bot = Pin(1, Pin.IN)
@@ -107,10 +114,24 @@ class robug:
     def inc_loop_counters(self):
         for i in range(4):
             self.lLeg[i].inc_loop_counter()
+            
+    def calculate_com_shift(self):
+        counter_state = self.lLeg[0].gait.get_loop_counter()
+        k = (counter_state % self.com_cycle_period) / self.com_cycle_period
+        r = (2*math.pi * k)
+        # r = (2*math.pi * k) - self.com_phase_shift        
+        relative_shift = math.cos(r)
+        absolute_shift = relative_shift * c._GAIT_COM_SHIFT
+        # print(counter_state, absolute_shift)
+        return absolute_shift
 
     def calculate_joint_angles(self, bAbs=True):
+        com_shift = self.calculate_com_shift()
         for i in range(4):
-            self.lLeg[i].calculate_joint_angles(bAbs)
+            # self.lLeg[i].calculate_joint_angles(bAbs)
+            self.lLeg[i].calculate_foot_position(bAbs)
+            self.lLeg[i].foot_pos.add(v3(com_shift * c._LEG_DIR[i], 0, 0))    
+            self.lLeg[i].solve()        
 
     def set_joints(self):
         for i in range(4):        

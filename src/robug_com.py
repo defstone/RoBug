@@ -58,6 +58,10 @@ class rbcom:
         elif strMsg == 'RESUME_BWD':
             strCmd = '_cmd_RESUME_'
             strSubCmd = '_cmd_BWD_'
+            
+        elif strMsg == 'PAUSE':
+            strCmd = '_cmd_PAUSE_'
+            strSubCmd = '_cmd_NA_'            
 
         # transition moving -> stop pose (neutral stance)
         elif strMsg == 'STOP_POSE_FWD':

@@ -20,7 +20,8 @@ class constants:
     
     # ------- pre-calculated values -------
     
-    _PI0P5 = pi/2
+    _PI0P5  = pi/2
+    _PI0P25 = pi/4
     
     # ------- physical paramters -------
     
@@ -74,56 +75,43 @@ class constants:
     # loop update rate in ms
     # golden: 11
     # speedy: 8
-    _GAIT_LOOP_TIME = 8
+    _GAIT_LOOP_TIME = 7
     
     # height over ground
     # ref: shoulder joint
     # +z points up, -z points down
     # golden: -110
     _GAIT_HEIGHT = -100
-    # low gait - quick
-    # _GAIT_HEIGHT = -75
     
     # swing back time in ticks
     # golden: 14    
-    # _GAIT_SWING_TICKS = 44
-    _GAIT_SWING_TICKS = 14
-    # low gait - quick
-    # _GAIT_SWING_TICKS = 12    
+    _GAIT_SWING_TICKS = 42
     
     # linear movement phase in ticks
-    # golden: 64    
-    # _GAIT_SUPPORT_TICKS = 5*_GAIT_SWING_TICKS
-    _GAIT_SUPPORT_TICKS = 54
-    # low gait - quick
-    # _GAIT_SUPPORT_TICKS = 48    
+    # golden: 60   
+    _GAIT_SWING_MULT = 11
+    _GAIT_SEGMENTS = _GAIT_SWING_MULT + 1
+    _GAIT_SUPPORT_TICKS = _GAIT_SWING_MULT*_GAIT_SWING_TICKS
     
     # how much is loop counter incremented each loop
     _GAIT_LOOP_INC = 1
     
     # highest swing back point rel to _GAIT_HEIGHT
     # golden: -15
-    # _GAIT_SWING_AMPL = -25
-    _GAIT_SWING_AMPL = 15
-    # low gait - quick
-    # _GAIT_SWING_AMPL = 12    
-    
+    _GAIT_SWING_AMPL = 30
+  
     # distance from max. x to center of foot trajectory
     # golden: 35
-    _GAIT_HALF_STRIDE = 35    
-    # low gait - quick    
-    # _GAIT_HALF_STRIDE = 25
-    
+    _GAIT_HALF_STRIDE = 60    
+
     # amount of additional push of support legs to carry
     # twice the load during swing phase of other 2 legs
-    # golden: (0, 0, -5)
-    _GAIT_PUSH_STRENGTH = v3(0, 0, -5)
+    # golden: -5
+    _GAIT_PUSH_STRENGTH = v3(0, 0,  0)
     
     # how long sustain push after touch down of swing legs
     # golden: 0.15
-    _GAIT_PUSH_OVERLAP = int(_GAIT_SUPPORT_TICKS * 0.15)
-    # low gait - quick    
-    # _GAIT_PUSH_OVERLAP = int(_GAIT_SUPPORT_TICKS * 0.1)    
+    _GAIT_PUSH_OVERLAP = int(_GAIT_SUPPORT_TICKS * 0.15) 
     
     # how much push is sustained as fraction of _GAIT_PUSH_STRENGTH
     # golden: 1
@@ -140,18 +128,22 @@ class constants:
     _GAIT_TURN_X = 27.5
     
     # offset between diagonal legs for symmetric trott gait
-    _GAIT_PHASE_OFFSET = (_GAIT_SUPPORT_TICKS + _GAIT_SWING_TICKS) / 2
-    _GAIT_LEG_PHASE_OFFSET = [0, _GAIT_PHASE_OFFSET, _GAIT_PHASE_OFFSET, 0]
+    k = _GAIT_SWING_TICKS
+    j = (_GAIT_SEGMENTS/4) * k
+    _GAIT_LEG_PHASE_OFFSET = [0*j, 1*j, 2*j, 3*j]
    
     # neutral foot position offset
     # golden: + 15 (depends on body height i guess, here it was -100)
-    FOOT_OFFSET = _GAIT_HALF_STRIDE + 15
+    FOOT_OFFSET = _GAIT_HALF_STRIDE/2
     _GAIT_FOOT_X_OFFSET = [FOOT_OFFSET, FOOT_OFFSET, FOOT_OFFSET, FOOT_OFFSET]
     _GAIT_FOOT_0_OFFSET = v3(_GAIT_FOOT_X_OFFSET[0], 0.0, 0.0)
     _GAIT_FOOT_1_OFFSET = v3(_GAIT_FOOT_X_OFFSET[1], 0.0, 0.0)
     _GAIT_FOOT_2_OFFSET = v3(_GAIT_FOOT_X_OFFSET[2], 0.0, 0.0)
     _GAIT_FOOT_3_OFFSET = v3(_GAIT_FOOT_X_OFFSET[3], 0.0, 0.0)
     _GAIT_FOOT_OFFSET = [_GAIT_FOOT_0_OFFSET, _GAIT_FOOT_1_OFFSET, _GAIT_FOOT_2_OFFSET, _GAIT_FOOT_3_OFFSET]
+    
+    # max shift of CoM during walk cycle
+    _GAIT_COM_SHIFT = 20
     
     # leg x direction
     # FL: inherent +x is away from body , so fwd -> no correction req., DIR =  1

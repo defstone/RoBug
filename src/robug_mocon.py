@@ -129,8 +129,16 @@ class rbmocon:
         
         self.bRunLoop = True
         com.command_complete()
-        self.bAcceptNewCmd = True        
-                
+        self.bAcceptNewCmd = True
+        
+    def pause(self):
+        r = self.r
+        com = self.com
+        if r.is_support_start(0):
+            self.bRunLoop = False
+            self.bAcceptNewCmd = True
+            com.command_complete()         
+         
     def stop_step(self):
         r = self.r
         com = self.com
@@ -313,6 +321,8 @@ class rbmocon:
                   
             elif strCmd == '_cmd_RESUME_':     self.resume(strSubCmd)
             
+            elif strCmd == '_cmd_PAUSE_':      self.pause()            
+            
             elif strCmd == '_cmd_STOP_STEP_':  self.stop_step()
                         
             elif strCmd == '_cmd_TURN_LFT_':   await self.turn_l()
@@ -325,9 +335,9 @@ class rbmocon:
             
             elif strCmd == '_cmd_PURR_':       await self.purr()
             
-            elif strCmd == '_cmd_ROTATE_DN_': await self.rotate_body( 5)
+            elif strCmd == '_cmd_ROTATE_DN_':  await self.rotate_body( 5)
             
-            elif strCmd == '_cmd_ROTATE_UP_': await self.rotate_body(-5)
+            elif strCmd == '_cmd_ROTATE_UP_':  await self.rotate_body(-5)
 
             elif strCmd == '_cmd_EXIT_':
                 
