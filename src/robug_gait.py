@@ -44,6 +44,7 @@ class rbgait:
         self.i = int(c._GAIT_SUPPORT_TICKS/2)
         self.ioffset = 0
         self.incr  = c._GAIT_LOOP_INC
+        self.j = 0
 
         # internal state
         self.phase = 0
@@ -130,6 +131,7 @@ class rbgait:
         else:
             print('unknown step type')
             exit()
+            
     def calc_substep_X_abs(self):
         # calc x(i) independent from history
         if self.i == 0:
