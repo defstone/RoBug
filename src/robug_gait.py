@@ -40,7 +40,7 @@ class rbgait:
         self.irtn   = c._GAIT_SWING_TICKS
         self.xyzImpulse = c._GAIT_PUSH_STRENGTH
 
-        # internal loop counter
+        # internal loop counters
         self.i = int(c._GAIT_SUPPORT_TICKS/2)
         self.ioffset = 0
         self.incr  = c._GAIT_LOOP_INC
@@ -130,7 +130,6 @@ class rbgait:
         else:
             print('unknown step type')
             exit()
-
     def calc_substep_X_abs(self):
         # calc x(i) independent from history
         if self.i == 0:
@@ -165,9 +164,37 @@ class rbgait:
         else:
             print('error - unkown gait loop phase in calc_substep_X\n')
             
+    def get_dx(self):
+        dt = self.i - self.ifwd
+        one3rd =     c._GAIT_SWING_TICKS/3
+        two3rd = 2 * c._GAIT_SWING_TICKS/3
+        if   (dt >=    0) and (dt < one3rd): return 0
+        elif (dt >= one3rd) and (dt < two3rd): return (self.xreach/one3rd)
+        elif (dt >= two3rd) and (dt < c._GAIT_SWING_TICKS): return 0           
+                        
+    def calc_substep_X_rel2(self):
+        iP0 = self.cycle_mid-self.irtn        
+        iP1 = self.cycle_mid
+        # calc x(i) by increment / decrement
+        if self.i == 0:
+            self.xyz.x = self.xmax * self.dirX 
+        elif self.i > 0 and self.i < self.ifwd:
+            if self.i > iP0 and self.i < iP1: k = c._GAIT_FWD_GAIN[self.ID]
+            else: k =1.0
+            self.xyz.x = self.xyz.x - (self.dxfwd * k * self.dirX)
+        elif self.i == self.ifwd:
+            self.xyz.x = self.xyz.x - (self.dxfwd * self.dirX)
+            self.dxrtn = (self.xmax - (self.xyz.x * self.dirX)) / self.irtn
+        elif self.i > self.ifwd and self.i < self.substeps:
+            dx = self.get_dx()
+            self.xyz.x = self.xyz.x + (dx * self.dirX)
+            print(self.xyz.x)
+        else:
+            print('error - unkown gait loop phase in calc_substep_X\n')            
+            
     def calc_substep_X(self,bAbs):
         if bAbs: self.calc_substep_X_abs()
-        else: self.calc_substep_X_rel()            
+        else: self.calc_substep_X_rel2()            
             
     def calc_substep_Z_abs(self):
         # calc az(i) independent from history
@@ -185,7 +212,7 @@ class rbgait:
             self.xyz.z = self.zmin + (self.zampl * sin(self.az))
         else:
             print('error - unkown gait loop phase in calc_substep_Z\n')
-        if self.bPush: self.calc_substep_zpush()            
+        if self.bPush: self.calc_substep_zpush()      
             
     def calc_substep_Z_rel(self):
         # calc az(i) by increment / decrement        
@@ -225,7 +252,7 @@ class rbgait:
         elif self.i < 0 or self.i > self.substeps:
             print('error - unkown gait loop phase in calc_substep_push\n')
         self.xyz.z = self.xyz.z + iTmpZ
-
+        
     def calc_substep(self, strAxis, bAbs):
         if strAxis == 'x':
             self.calc_substep_X(bAbs)
