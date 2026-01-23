@@ -41,10 +41,6 @@ class rbleg:
         
     def inc_loop_counter(self):
         self.gait.loop_inc()
-
-    # 27/12/25
-    # separation in slove and solve_ik is new
-    # test b4 making this default
     
     def solve(self):
         # print(self.ID, ' solve: ', self.foot_pos)
@@ -55,15 +51,19 @@ class rbleg:
     def solve_ik(self, pos):
         self.foot_pos.set(pos)
         self.solve()
-    
-    def calculate_joint_angles(self, bAbs):
+        
+    def calculate_foot_position(self, bAbs):
         # calculate new z value
         pos, _ = self.gait.calc_substep('z', bAbs)
         # calculate new x value and add to xyz
         pos, _ = self.gait.calc_substep('x', bAbs)
-        # add constant offset - don't write back to gait.xyz via pos!
+        # add constant offset
         self.foot_pos.set(pos)
-        self.foot_pos.add(c._GAIT_FOOT_OFFSET[self.gait.ID])      
+        self.foot_pos.add(c._GAIT_FOOT_OFFSET[self.gait.ID])        
+    
+    def calculate_joint_angles(self, bAbs):
+        # calculate new foot position (incl. offset)
+        self.calculate_foot_position(bAbs)
         # solve ik and store leg position
         self.solve()
         
