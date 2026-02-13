@@ -1,0 +1,407 @@
+#VRML_SIM R2025a utf8
+# license: Apache License 2.0
+# license url: http://www.apache.org/licenses/LICENSE-2.0
+# This is a proto file for Webots for the RoBug
+# Extracted from: Z:\defstone\03_Electronics\servobot6 RoBug\simulation\RoBug_Scaled_URDF_mk3\urdf\RoBug.urdf
+
+PROTO RoBugMk3 [
+  field  SFVec3f     translation     0 0 0
+  field  SFRotation  rotation        0 0 1 0
+  field  SFString    name            "RoBugMk3"  # Is `Robot.name`.
+  field  SFString    controller      "void"      # Is `Robot.controller`.
+  field  MFString    controllerArgs  []          # Is `Robot.controllerArgs`.
+  field  SFString    customData      ""          # Is `Robot.customData`.
+  field  SFBool      supervisor      FALSE       # Is `Robot.supervisor`.
+  field  SFBool      synchronization TRUE        # Is `Robot.synchronization`.
+  field  SFBool      selfCollision   FALSE       # Is `Robot.selfCollision`.
+]
+{
+  Robot {
+    translation IS translation
+    rotation IS rotation
+    controller IS controller
+    controllerArgs IS controllerArgs
+    customData IS customData
+    supervisor IS supervisor
+    synchronization IS synchronization
+    selfCollision IS selfCollision
+    children [
+      Shape {
+        appearance DEF Material PBRAppearance {
+          baseColor 0.500000 0.500000 0.500000
+          roughness 1.000000
+          metalness 0
+        }
+        geometry DEF Plane_004 Mesh {
+          url "Plane.004.stl"
+        }
+      }
+      HingeJoint {
+        jointParameters HingeJointParameters {
+          axis 0.000000 -1.000000 0.000000
+          anchor -0.037000 -0.040500 -0.005500
+        }
+        device [
+          RotationalMotor {
+            name "leg_femur_FL_link_joint"
+            maxVelocity 10.362
+            minPosition -1.57
+            maxPosition 1.57
+            maxTorque 0.24
+          }
+          PositionSensor {
+            name "leg_femur_FL_link_joint_sensor"
+          }
+        ]
+        endPoint Solid {
+          translation -0.037000 -0.040500 -0.005500
+          children [
+            Shape {
+              appearance USE Material
+              geometry DEF Cylinder_001 Mesh {
+                url "Cylinder.001.stl"
+              }
+            }
+            HingeJoint {
+              jointParameters HingeJointParameters {
+                axis 0.000000 -1.000000 0.000000
+                anchor -0.047100 -0.014500 0.000000
+              }
+              device [
+                RotationalMotor {
+                  name "leg_tibia_FL_link_joint"
+                  maxVelocity 10.362
+                  minPosition -1.57
+                  maxPosition 1.57
+                  maxTorque 0.24
+                }
+                PositionSensor {
+                  name "leg_tibia_FL_link_joint_sensor"
+                }
+              ]
+              endPoint Solid {
+                translation -0.047100 -0.014500 0.000000
+                children [
+                  Shape {
+                    appearance USE Material
+                    geometry DEF Cylinder_014 Mesh {
+                      url "Cylinder.014.stl"
+                    }
+                  }
+                ]
+                name "leg_tibia_FL_link"
+                boundingObject Pose {
+                  translation 0.000000 -0.000600 -0.102810
+                  children [
+                    Cylinder {
+                      radius 0.009
+                      height 0.018
+                    }
+                  ]
+                }
+                physics Physics {
+                  density -1
+                  mass 0.006000
+                  centerOfMass [ -0.000050 -0.000260 -0.057570 ]
+                }
+              }
+            }
+          ]
+          name "leg_femur_FL_link"
+          boundingObject Pose {
+            translation -0.026510 -0.000200 0.000000
+            children [
+              Box {
+                 size 0.072980 0.029400 0.020000
+              }
+            ]
+          }
+          physics Physics {
+            density -1
+            mass 0.017000
+            centerOfMass [ -0.032070 0.000380 -0.000080 ]
+          }
+        }
+      }
+      HingeJoint {
+        jointParameters HingeJointParameters {
+          axis 0.000000 1.000000 0.000000
+          anchor -0.037000 0.040500 -0.005500
+        }
+        device [
+          RotationalMotor {
+            name "leg_femur_FR_link_joint"
+            maxVelocity 10.362
+            minPosition -1.57
+            maxPosition 1.57
+            maxTorque 0.24
+          }
+          PositionSensor {
+            name "leg_femur_FR_link_joint_sensor"
+          }
+        ]
+        endPoint Solid {
+          translation -0.037000 0.040500 -0.005500
+          children [
+            Shape {
+              appearance USE Material
+              geometry DEF Cylinder_031 Mesh {
+                url "Cylinder.031.stl"
+              }
+            }
+            HingeJoint {
+              jointParameters HingeJointParameters {
+                axis 0.000000 1.000000 0.000000
+                anchor -0.047100 0.014500 0.000000
+              }
+              device [
+                RotationalMotor {
+                  name "leg_tibia_FR_link_joint"
+                  maxVelocity 10.362
+                  minPosition -1.57
+                  maxPosition 1.57
+                  maxTorque 0.24
+                }
+                PositionSensor {
+                  name "leg_tibia_FR_link_joint_sensor"
+                }
+              ]
+              endPoint Solid {
+                translation -0.047100 0.014500 0.000000
+                children [
+                  Shape {
+                    appearance USE Material
+                    geometry DEF Cylinder_032 Mesh {
+                      url "Cylinder.032.stl"
+                    }
+                  }
+                ]
+                name "leg_tibia_FR_link"
+                boundingObject Pose {
+                  translation 0.000000 0.000600 -0.102810
+                  children [
+                    Cylinder {
+                      radius 0.009
+                      height 0.018
+                    }
+                  ]
+                }
+                physics Physics {
+                  density -1
+                  mass 0.006000
+                  centerOfMass [ -0.000050 0.000260 -0.057570 ]
+                }
+              }
+            }
+          ]
+          name "leg_femur_FR_link"
+          boundingObject Pose {
+            translation -0.026510 0.000200 0.000000
+            children [
+              Box {
+                 size 0.072980 0.029400 0.020000
+              }
+            ]
+          }
+          physics Physics {
+            density -1
+            mass 0.017000
+            centerOfMass [ -0.032070 -0.000380 -0.000080 ]
+          }
+        }
+      }
+      HingeJoint {
+        jointParameters HingeJointParameters {
+          axis 0.000000 -1.000000 0.000000
+          anchor 0.037000 -0.040500 -0.005500
+        }
+        device [
+          RotationalMotor {
+            name "leg_femur_RL_link_joint"
+            maxVelocity 10.362
+            minPosition -1.57
+            maxPosition 1.57
+            maxTorque 0.24
+          }
+          PositionSensor {
+            name "leg_femur_RL_link_joint_sensor"
+          }
+        ]
+        endPoint Solid {
+          translation 0.037000 -0.040500 -0.005500
+          children [
+            Shape {
+              appearance USE Material
+              geometry DEF Cylinder_034 Mesh {
+                url "Cylinder.034.stl"
+              }
+            }
+            HingeJoint {
+              jointParameters HingeJointParameters {
+                axis 0.000000 -1.000000 0.000000
+                anchor 0.047100 -0.014500 0.000000
+              }
+              device [
+                RotationalMotor {
+                  name "leg_tibia_RL_link_joint"
+                  maxVelocity 10.362
+                  minPosition -1.57
+                  maxPosition 1.57
+                  maxTorque 0.24
+                }
+                PositionSensor {
+                  name "leg_tibia_RL_link_joint_sensor"
+                }
+              ]
+              endPoint Solid {
+                translation 0.047100 -0.014500 0.000000
+                children [
+                  Shape {
+                    appearance USE Material
+                    geometry DEF Cylinder_036 Mesh {
+                      url "Cylinder.036.stl"
+                    }
+                  }
+                ]
+                name "leg_tibia_RL_link"
+                boundingObject Pose {
+                  translation -0.000000 -0.000600 -0.102810
+                  children [
+                    Cylinder {
+                      radius 0.009
+                      height 0.018
+                    }
+                  ]
+                }
+                physics Physics {
+                  density -1
+                  mass 0.006000
+                  centerOfMass [ 0.000050 -0.000260 -0.057570 ]
+                }
+              }
+            }
+          ]
+          name "leg_femur_RL_link"
+          boundingObject Pose {
+            translation 0.026510 -0.000200 0.000000
+            children [
+              Box {
+                 size 0.072980 0.029400 0.020000
+              }
+            ]
+          }
+          physics Physics {
+            density -1
+            mass 0.017000
+            centerOfMass [ 0.032070 0.000380 -0.000080 ]
+          }
+        }
+      }
+      HingeJoint {
+        jointParameters HingeJointParameters {
+          axis 0.000000 1.000000 0.000000
+          anchor 0.037000 0.040500 -0.005500
+        }
+        device [
+          RotationalMotor {
+            name "leg_femur_RR_link_joint"
+            maxVelocity 10.362
+            minPosition -1.57
+            maxPosition 1.57
+            maxTorque 0.24
+          }
+          PositionSensor {
+            name "leg_femur_RR_link_joint_sensor"
+          }
+        ]
+        endPoint Solid {
+          translation 0.037000 0.040500 -0.005500
+          children [
+            Shape {
+              appearance USE Material
+              geometry DEF Cylinder_035 Mesh {
+                url "Cylinder.035.stl"
+              }
+            }
+            HingeJoint {
+              jointParameters HingeJointParameters {
+                axis 0.000000 1.000000 0.000000
+                anchor 0.047100 0.014500 0.000000
+              }
+              device [
+                RotationalMotor {
+                  name "leg_tibia_RR_link_joint"
+                  maxVelocity 10.362
+                  minPosition -1.57
+                  maxPosition 1.57
+                  maxTorque 0.24
+                }
+                PositionSensor {
+                  name "leg_tibia_RR_link_joint_sensor"
+                }
+              ]
+              endPoint Solid {
+                translation 0.047100 0.014500 0.000000
+                children [
+                  Shape {
+                    appearance USE Material
+                    geometry DEF Cylinder_038 Mesh {
+                      url "Cylinder.038.stl"
+                    }
+                  }
+                ]
+                name "leg_tibia_RR_link"
+                boundingObject Pose {
+                  translation -0.000000 0.000600 -0.102810
+                  children [
+                    Cylinder {
+                      radius 0.009
+                      height 0.018
+                    }
+                  ]
+                }
+                physics Physics {
+                  density -1
+                  mass 0.006000
+                  centerOfMass [ 0.000050 0.000260 -0.057570 ]
+                }
+              }
+            }
+          ]
+          name "leg_femur_RR_link"
+          boundingObject Pose {
+            translation 0.026510 0.000200 0.000000
+            children [
+              Box {
+                 size 0.072980 0.029400 0.020000
+              }
+            ]
+          }
+          physics Physics {
+            density -1
+            mass 0.017000
+            centerOfMass [ 0.032070 -0.000380 -0.000080 ]
+          }
+        }
+      }
+    ]
+    name IS name
+    boundingObject Pose {
+      translation 0.000000 0.000000 0.003000
+      children [
+        Box {
+           size 0.116000 0.082800 0.058000
+        }
+      ]
+    }
+    physics Physics {
+      density -1
+      mass 0.218000
+      centerOfMass [ -0.000130 0.000000 0.001110 ]
+      inertiaMatrix [
+        1.000000e-04 2.200000e-04 2.400000e-04
+        0.000000e+00 0.000000e+00 -0.000000e+00
+      ]
+    }
+  }
+}

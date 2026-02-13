@@ -1,0 +1,89 @@
+#VRML_SIM R2025a utf8
+
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/appearances/protos/RustyMetal.proto"
+EXTERNPROTO "../protos/RoBug_Proto/RoBugMk3.proto"
+
+WorldInfo {
+  basicTimeStep 8
+  FPS 30
+  optimalThreadCount 4
+  contactProperties [
+    ContactProperties {
+      material1 "ground"
+      forceDependentSlip [
+        1
+      ]
+      softCFM 0.01
+      maxContactJoints 14
+    }
+  ]
+}
+Viewpoint {
+  orientation -0.12706031504542445 -0.08973678309620893 0.9878274070403704 3.968127795180526
+  position 3.518979938450131 2.793981614885708 0.7982012854771948
+}
+Background {
+  skyColor [
+    0.6 0.6 0.6
+  ]
+  luminosity 0.4
+}
+SpotLight {
+  attenuation 0 0 1
+  beamWidth 0.5
+  cutOffAngle 0.9
+  intensity 7
+  location 0 0 3
+  castShadows TRUE
+}
+DEF ramp Solid {
+  translation 0.910828 0.6 -0.0055311
+  rotation 0 1 0 0.05
+  children [
+    DEF box Shape {
+      appearance RustyMetal {
+      }
+      geometry DEF box Box {
+        size 0.5 0.3 0.05
+      }
+    }
+  ]
+  boundingObject USE box
+}
+SpotLight {
+  attenuation 0 0 1
+  beamWidth 0.7
+  direction 0 -1 -1
+  intensity 3
+  location 1.6 2.6 2
+}
+Solid {
+  translation 0 0 -0.0068625
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColorMap ImageTexture {
+          url [
+            "../checkerboard.jpg"
+          ]
+        }
+        roughness 0.5
+        metalness 0
+        emissiveIntensity 0
+        textureTransform TextureTransform {
+          scale 4 4
+        }
+      }
+      geometry DEF plane Plane {
+        size 7 7
+      }
+    }
+  ]
+  name "groundplane"
+  contactMaterial "ground"
+  boundingObject USE plane
+}
+RoBugMk3 {
+  translation 2 0.7 0.14
+  controller "RoBugDyn"
+}
