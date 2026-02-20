@@ -34,6 +34,9 @@ class rbmocon:
         self.iPhase = 1
         self.State = ''
         
+    async def timeSlice(self, fLoopTime):
+        await asyncio.sleep_ms(fLoopTime)        
+        
     def sign(self, num):
         return -1 if num < 0 else 1        
         
@@ -67,16 +70,19 @@ class rbmocon:
             tmp.add(c._DIST_PIVOT_TO_HIP)
             lOF.append(tmp)
         
-        for a in range(abs(theta)):
+        j = 4
+        thetaxj = (theta * j)
+        for a in range(1, abs(thetaxj)+1):
+            
             # rotate foor position vector relative to body in opposite direction
-            r.lLeg[0].foot_pos = self.rotate_point_point(lOF[0], v3(0,0,0),  a * sign)
-            r.lLeg[1].foot_pos = self.rotate_point_point(lOF[1], v3(0,0,0), -a * sign)
-            r.lLeg[2].foot_pos = self.rotate_point_point(lOF[2], v3(0,0,0),  a * sign)
-            r.lLeg[3].foot_pos = self.rotate_point_point(lOF[3], v3(0,0,0), -a * sign)
+            r.lLeg[0].foot_pos = self.rotate_point_point(lOF[0], v3(0,0,0),  a * sign/j)
+            r.lLeg[1].foot_pos = self.rotate_point_point(lOF[1], v3(0,0,0), -a * sign/j)
+            r.lLeg[2].foot_pos = self.rotate_point_point(lOF[2], v3(0,0,0),  a * sign/j)
+            r.lLeg[3].foot_pos = self.rotate_point_point(lOF[3], v3(0,0,0), -a * sign/j)
             
             for i in range(4):
-                # the ik solver solv3es reative to hip joint
-                # so cal new foot position relative to hip joint
+                # the ik solver solves reative to hip joint
+                # so calc new foot position relative to hip joint
                 r.lLeg[i].foot_pos.sub(c._DIST_PIVOT_TO_HIP)
                 # solve foot position
                 r.lLeg[i].solve()               
@@ -89,14 +95,23 @@ class rbmocon:
             await asyncio.sleep_ms(10)
             
         self.bAcceptNewCmd = True
-        com.command_complete()         
+        com.command_complete()
+        
+    def set_direction(self, strSubCmd):
+        r = self.r
+        if   strSubCmd == '_cmd_FWD_':
+            r.set_direction( 1, 'x')
+        elif strSubCmd == '_cmd_BWD_':
+            r.set_direction(-1, 'x')
+        else: com.subcommand_unknown()        
+        
          
-    def start_step(self):
+    def start_step(self, strSubCmd):
         r = self.r
         com = self.com
-        
+        self.set_direction(strSubCmd)
+
         if self.iPhase == 1:
-            # re-enable support leg z-push for smooth gait 
             r.push_disable()                    
             self.bRunLoop = True
             r.lLeg[0].gait.set_az(0)
@@ -110,22 +125,15 @@ class rbmocon:
                 r.lLeg[2].gait.calc_parameters_fullstep()
                 r.lLeg[3].gait.calc_parameters_fullstep()
                 self.iPhase = 1
+                r.push_enable() 
                 self.bRunLoop = False
                 self.bAcceptNewCmd = True
-                com.command_complete()
-                
-    async def timeSlice(self, fLoopTime):
-        await asyncio.sleep_ms(fLoopTime)                
+                com.command_complete()                
                 
     def resume(self, strSubCmd):
         r = self.r
         com = self.com
-        
-        if   strSubCmd == '_cmd_FWD_':
-            r.set_direction( 1, 'x')
-        elif strSubCmd == '_cmd_BWD_':
-            r.set_direction(-1, 'x')
-        else: com.subcommand_unknown()
+        self.set_direction(strSubCmd)
         
         self.bRunLoop = True
         com.command_complete()
@@ -139,9 +147,10 @@ class rbmocon:
             self.bAcceptNewCmd = True
             com.command_complete()         
          
-    def stop_step(self):
+    def stop_step(self, strSubCmd):
         r = self.r
         com = self.com
+        self.set_direction(strSubCmd)        
         
         if self.iPhase == 1:
             if r.is_support_end(0):
@@ -230,7 +239,8 @@ class rbmocon:
         await r.set_positions_relative(lRelPos, 5)                    
         # push and turn
         lRelPos = [v3(0, 0,  2*yjump), v3( xturn, 0, -1*yjump), v3(-xturn, 0, -1*yjump), v3(0, 0,  2*yjump)]        
-        await r.set_positions_relative(lRelPos, 6) 
+        await r.set_positions_relative(lRelPos, 6)
+        await asyncio.sleep_ms(50)        
         # land
         lRelPos = [v3(0, 0, -1*yjump), v3(     0, 0,  2*yjump), v3(     0, 0,  2*yjump), v3(0, 0, -1*yjump)]
         await r.set_positions_relative(lRelPos, 8) 
@@ -272,7 +282,8 @@ class rbmocon:
         await r.set_positions_relative(lRelPos, 5)                    
         # push and turn
         lRelPos = [v3(-xturn, 0, -1*yjump), v3(0, 0,  2*yjump), v3(0, 0,  2*yjump), v3( xturn, 0, -1*yjump)]        
-        await r.set_positions_relative(lRelPos, 6) 
+        await r.set_positions_relative(lRelPos, 6)
+        await asyncio.sleep_ms(50)         
         # land
         lRelPos = [v3(     0, 0,  2*yjump), v3(0, 0, -1*yjump), v3(0, 0, -1*yjump), v3(     0, 0,  2*yjump)]
         await r.set_positions_relative(lRelPos, 8) 
@@ -317,13 +328,13 @@ class rbmocon:
             # process current cmd/subcmd
             if   strCmd == '_cmd_NOP_':        self.bAcceptNewCmd = True
             
-            elif strCmd == '_cmd_START_STEP_': self.start_step()
+            elif strCmd == '_cmd_START_STEP_': self.start_step(strSubCmd)
                   
             elif strCmd == '_cmd_RESUME_':     self.resume(strSubCmd)
             
             elif strCmd == '_cmd_PAUSE_':      self.pause()            
             
-            elif strCmd == '_cmd_STOP_STEP_':  self.stop_step()
+            elif strCmd == '_cmd_STOP_STEP_':  self.stop_step(strSubCmd)
                         
             elif strCmd == '_cmd_TURN_LFT_':   await self.turn_l()
             
@@ -335,9 +346,9 @@ class rbmocon:
             
             elif strCmd == '_cmd_PURR_':       await self.purr()
             
-            elif strCmd == '_cmd_ROTATE_DN_':  await self.rotate_body( 5)
+            elif strCmd == '_cmd_ROTATE_DN_':  await self.rotate_body( 15)
             
-            elif strCmd == '_cmd_ROTATE_UP_':  await self.rotate_body(-5)
+            elif strCmd == '_cmd_ROTATE_UP_':  await self.rotate_body(-15)
 
             elif strCmd == '_cmd_EXIT_':
                 

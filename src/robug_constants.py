@@ -94,7 +94,7 @@ class constants:
     # linear movement phase in ticks
     # golden: 64    
     # _GAIT_SUPPORT_TICKS = 5*_GAIT_SWING_TICKS
-    _GAIT_SUPPORT_TICKS = 54
+    _GAIT_SUPPORT_TICKS = 50
     # low gait - quick
     # _GAIT_SUPPORT_TICKS = 48    
     
@@ -104,7 +104,7 @@ class constants:
     # highest swing back point rel to _GAIT_HEIGHT
     # golden: -15
     # _GAIT_SWING_AMPL = -25
-    _GAIT_SWING_AMPL = 15
+    _GAIT_SWING_AMPL = 20
     # low gait - quick
     # _GAIT_SWING_AMPL = 12    
     
@@ -135,9 +135,9 @@ class constants:
     _GAIT_FWD_GAIN = [1.0, 1.0, 1.0, 1.0]
     
     # y-delta for every phase of turning at the spot
-    _GAIT_TURN_Y = 9
+    _GAIT_TURN_Y = 10
     # x-delta for every phase of turning at the spot
-    _GAIT_TURN_X = 27.5
+    _GAIT_TURN_X = 30
     
     # offset between diagonal legs for symmetric trott gait
     _GAIT_PHASE_OFFSET = (_GAIT_SUPPORT_TICKS + _GAIT_SWING_TICKS) / 2

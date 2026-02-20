@@ -163,6 +163,10 @@ class robug:
         # apply direction to legs accouting for leg mounting orientation
         for i in range(4):
             self.lLeg[i].gait.set_direction(dir * c._LEG_DIR[i], strAxis)
+            
+    def get_direction(self, strAxis):
+        if   strAxis == 'x': return self.dirX
+        elif strAxis == 'z': return self.dirZ 
 
     def is_stable(self):
         bTmp = True

@@ -13,7 +13,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-
 from math import degrees, pi, sin
 from time import sleep
 import math
@@ -61,34 +60,55 @@ async def pulse_leds():
         await asyncio.sleep_ms(7)
         
 # touch sensor task   
-async def read_touch_top():
-    global touch_top
+async def read_touch():
+    global touch_top, touch_bot
     while True:
-        b = r.touch_top()
-        if b:
+        bt = r.touch_top()
+        bb = r.touch_bot()
+        if bt:
             touch_top = True
         else:
             touch_top = False
+        if bb:
+            touch_bot = True
+        else:
+            touch_bot = False            
         await asyncio.sleep(0.1)
 
 # super simple supervisor task
 # wait for top touch sensor
-# walk for 4s
-#repeat
+# walk fwd - stop - walk bwd - stop - walk fwd - stop
+# repeat
 async def walk():
+    
+    # bring Robug into neutral stance pose
+    await send_cmd('RESUME_FWD')
+    await asyncio.sleep(0.25)
+    await send_cmd('STOP_POSE_FWD')
+    
     while True:
-        if touch_top:
-            # init Robug
+        if touch_bot:
+            await send_cmd('START_POSE_FWD')            
             await send_cmd('RESUME_FWD')
-            await asyncio.sleep(4)
-            await send_cmd('PAUSE')
+            await asyncio.sleep(2)
+            await send_cmd('STOP_POSE_FWD')
+            await asyncio.sleep(1)
+            await send_cmd('START_POSE_BWD')
+            await send_cmd('RESUME_BWD')
+            await asyncio.sleep(2)
+            await send_cmd('STOP_POSE_BWD')
+            await asyncio.sleep(1)
+            await send_cmd('START_POSE_FWD')            
+            await send_cmd('RESUME_FWD')
+            await asyncio.sleep(2)
+            await send_cmd('STOP_POSE_FWD')
         else:
             await asyncio.sleep_ms(50)
    
 async def main():
     # start any sensor related tasks that need to run concurrently
     task1 = asyncio.create_task(pulse_leds())
-    task2 = asyncio.create_task(read_touch_top())  
+    task2 = asyncio.create_task(read_touch())  
     # start the motion controller
     task3 = asyncio.create_task(m.run())
     # start supervisor
@@ -116,6 +136,7 @@ if __name__ == "__main__":
     
     # start tasks
     touch_top = False
+    touch_bot = False    
     asyncio.run(main())
     
     # clean up and shut down
