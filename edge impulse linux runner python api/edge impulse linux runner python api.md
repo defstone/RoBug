@@ -1,5 +1,5 @@
 # Edge Impulse Linux Python Runtime — Developer Handbook  
-*A practical guide to running `.eim` models on embedded Linux devices*
+*A practical guide to running `.eim` models on embedded Linux devices - compiled by Copilot*
 
 ---
 
