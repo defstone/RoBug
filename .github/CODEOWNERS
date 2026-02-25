@@ -1,0 +1,11 @@
+# global owner for the entire repository
+* @defstone
+
+# RoBug source code
+/src/ @defstone
+
+# webots simulation
+/simulation/ @defstone
+
+# edge impulse linux python sdk documentation
+/edge impulse linux runner python api/ @defstone
