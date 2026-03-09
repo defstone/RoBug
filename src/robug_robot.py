@@ -35,11 +35,11 @@ class robug:
         self.lLegTicks =[[], [], [], []]
         
         # touch sensor setup
-        self.touch_top = Pin(0, Pin.IN)
-        self.touch_bot = Pin(1, Pin.IN)
+        self.touch_top = Pin(c._PIN_TOUCH_TOP, Pin.IN)
+        self.touch_bot = Pin(c._PIN_TOUCH_BOT, Pin.IN)
         
         # distance sensor setup
-        self.vl53 = vl53l0x(I2C(0, sda=Pin(20), scl=Pin(21), freq=400000))
+        self.vl53 = vl53l0x(I2C(c._I2C_BUS, sda=Pin(c._PIN_I2C_SDA), scl=Pin(c._PIN_I2C_SCL), freq=c._I2C_RATE))
         self.vl53.stop_continuous()
         
         # led setup
