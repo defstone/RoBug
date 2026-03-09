@@ -18,6 +18,13 @@ from robug_utils import v3
 
 class constants:
     
+    # ------- define RoBug HW version -------
+    # options:
+    # "prototype"
+    # "V100"
+    
+    _HW = 'prototype'
+    
     # ------- pre-calculated values -------
     
     _PI0P5 = pi/2
@@ -35,15 +42,46 @@ class constants:
     # servo to gpio mapping
     # [0] front left femur
     # [1] front left tibia
-    # ...
+    # [2] rear left femur
+    # [3] rear left tibia
+    # [4] front right femur
+    # [5] front right tibia
+    # [6] rear right femur
     # [7] rear right tibia
-    _SERVO_MAP = [ 16,  17,  19,  18,  14,  15,  13,  12]
+    
+    if _HW == 'prototype':
+        
+        _SERVO_MAP     = [16, 17, 19, 18, 14, 15, 13, 12]
+        _PIN_TOUCH_TOP = 0
+        _PIN_TOUCH_BOT = 1
+        _PIN_LED_GRN   = 4
+        _PIN_LED_RED   = 5
+        _I2C_BUS       = 0
+        _I2C_RATE      = 400000
+        _PIN_I2C_SDA   = 20
+        _PIN_I2C_SCL   = 21
+
+    elif _HW == 'V100':
+        
+        _SERVO_MAP     = [12, 11, 4, 3, 15, 14, 1, 0]
+        _PIN_TOUCH_TOP = 6
+        _PIN_TOUCH_BOT = 19
+        _PIN_LED_GRN   = 28
+        _PIN_LED_RED   = 27
+        _I2C_BUS       = 0
+        _I2C_RATE      = 400000
+        _PIN_I2C_SDA   = 8
+        _PIN_I2C_SCL   = 9
+
+    else:
+        print('unknown hardware version')
+        exit()
     
     # direction correction
     _SERVO_SGN = [  1,  -1,  -1,   1,  -1,   1,   1,  -1]
     
     # servo calibration for neutral stance in ticks (90° joint angles)
-    _SERVO_CAL = [ 75,   20,  20, -55, -35,   0, -20, -50]
+    _SERVO_CAL = [ 75,  20,  20, -55, -35,   0, -20, -50]
     
     # servo gain correction
     _SERVO_GAIN = [1.00, 1.00, 1.00, 1.03, 1.00, 0.97, 1.00, 0.97]

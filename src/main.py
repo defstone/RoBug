@@ -197,8 +197,6 @@ async def explorer():
                 else:
                     dist_scan.append(dist_tmp)
                     
-
-                
         # -------------------------------------------------
         elif RoBugState == 'avoid_phase_1.1':
         # -------------------------------------------------
