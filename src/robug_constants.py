@@ -16,14 +16,20 @@
 from math import pi
 from robug_utils import v3
 
+try:
+    from robug_local_config import _HW
+except ImportError:
+    _HW = 'prototype'
+
 class constants:
     
     # ------- define RoBug HW version -------
     # options:
     # "prototype"
     # "V100"
+    # Set via robug_local_config.py (gitignored); falls back to 'prototype' if absent.
     
-    _HW = 'prototype'
+    _HW = _HW
     
     # ------- pre-calculated values -------
     
