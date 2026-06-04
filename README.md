@@ -5,7 +5,7 @@ project for everybody who wants to dive into robotics without spending a fortune
 parts and tools, but also an open, modular and feature-rich platform for advanced
 robotics experiments. No matter if you want to navigate RoBug through your room with
 the RoBug Remote Control App running on your mobile phone or if you want to experiment
-with autonomous navigation or obstacle detection, this project onhackster.io is for you:
+with autonomous navigation or obstacle detection, this project on hackster.io is for you:
 [robug - tiny robot, big attitude](https://www.hackster.io/robots4all/robug-tiny-robot-big-attitude-ec32c7)
 
 <img width="800" height="600" alt="RoBug_and_his_double" src="https://github.com/user-attachments/assets/dab777c2-4b4e-4f69-9bd3-a20df38d0b9e" />
