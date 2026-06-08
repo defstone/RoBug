@@ -1,0 +1,9 @@
+# Local hardware configuration — copy this file to robug_local_config.py
+# and set _HW to match your hardware revision.
+# robug_local_config.py is gitignored and will not be committed.
+#
+# Valid options:
+#   'prototype'
+#   'V100'
+
+_HW = 'V100'
