@@ -7,5 +7,5 @@
 # webots simulation
 /simulation/ @defstone
 
-# edge impulse linux python sdk documentation
-/edge impulse linux runner python api/ @defstone
+# remote control (android) app
+/rc_app/ @defstone
