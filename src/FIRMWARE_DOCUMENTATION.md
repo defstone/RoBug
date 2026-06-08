@@ -106,10 +106,10 @@ The `rbgait` class generates smooth leg trajectories following a trotting gait p
 
 **Gait Phases:**
 ```
-Phase 1: Support Start (landing leg)
-Phase 2: Support Phase (pushing leg - majority of cycle)
-Phase 3: Support End (leg leaving ground)
-Phase 4: Swing Phase (leg in air, returning to start)
+Phase 1: Support Start (cycle start, foot moving on ground)
+Phase 2: Support Phase (locomotion, foot on ground - majority of cycle)
+Phase 3: Support End (foot leaving ground)
+Phase 4: Swing Phase (foot moving in air, reverse direction, returning to start)
 ```
 
 **Key Concepts:**
