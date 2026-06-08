@@ -28,8 +28,7 @@ class constants:
     # "prototype"
     # "V100"
     # Set via robug_local_config.py (gitignored); falls back to 'prototype' if absent.
-    
-    _HW = _HW
+    _HW = _HW    
     
     # ------- pre-calculated values -------
     
@@ -39,6 +38,7 @@ class constants:
     
     # servo pwm base frequency 
     _SERVO_PWM_FREQ = 250
+    
 
     _SERVO_NEUTRAL = 1500
     # servo limits
@@ -66,18 +66,19 @@ class constants:
         _I2C_RATE      = 400000
         _PIN_I2C_SDA   = 20
         _PIN_I2C_SCL   = 21
+        _PIN_ADC       = 26
 
     elif _HW == 'V100':
-        
         _SERVO_MAP     = [12, 11, 4, 3, 15, 14, 1, 0]
         _PIN_TOUCH_TOP = 6
         _PIN_TOUCH_BOT = 19
-        _PIN_LED_GRN   = 28
-        _PIN_LED_RED   = 27
+        _PIN_LED_GRN   = 10
+        _PIN_LED_RED   = 5
         _I2C_BUS       = 0
         _I2C_RATE      = 400000
         _PIN_I2C_SDA   = 8
         _PIN_I2C_SCL   = 9
+        _PIN_ADC       = 26        
 
     else:
         print('unknown hardware version')
@@ -87,11 +88,13 @@ class constants:
     _SERVO_SGN = [  1,  -1,  -1,   1,  -1,   1,   1,  -1]
     
     # servo calibration for neutral stance in ticks (90° joint angles)
-    _SERVO_CAL = [ 75,  20,  20, -55, -35,   0, -20, -50]
+    # _SERVO_CAL = [ 90,  50,  20, -55, -50,   0, -20, 0-25]
+    _SERVO_CAL =  [ -20,    20,   35,   10,   15,   20,    20,  0]    
     
     # servo gain correction
-    _SERVO_GAIN = [1.00, 1.00, 1.00, 1.03, 1.00, 0.97, 1.00, 0.97]
-    
+    # _SERVO_GAIN = [1.00, 0.95, 1.00, 1.03, 1.00, 0.97, 1.00, 1.00]
+    _SERVO_GAIN = [0.95, 1.00, 0.90, 1.03, 0.97, 0.93, 0.93, 0.97]    
+
     # by testing: range +/-950 ticks = +/-90° 
     _SERVO_K = pi/1900
     
@@ -124,21 +127,22 @@ class constants:
     # ref: shoulder joint
     # +z points up, -z points down
     # golden: -110
-    _GAIT_HEIGHT = -100
+    _GAIT_HEIGHT = -85
     # low gait - quick
     # _GAIT_HEIGHT = -75
     
     # swing back time in ticks
     # golden: 14    
     # _GAIT_SWING_TICKS = 44
-    _GAIT_SWING_TICKS = 14
+    # _GAIT_SWING_TICKS = 14
     # low gait - quick
-    # _GAIT_SWING_TICKS = 12    
+    _GAIT_SWING_TICKS = 12    
     
     # linear movement phase in ticks
     # golden: 64    
     # _GAIT_SUPPORT_TICKS = 5*_GAIT_SWING_TICKS
-    _GAIT_SUPPORT_TICKS = 50
+    # _GAIT_SUPPORT_TICKS = 50
+    _GAIT_SUPPORT_TICKS = 40 
     # low gait - quick
     # _GAIT_SUPPORT_TICKS = 48    
     
@@ -148,20 +152,20 @@ class constants:
     # highest swing back point rel to _GAIT_HEIGHT
     # golden: -15
     # _GAIT_SWING_AMPL = -25
-    _GAIT_SWING_AMPL = 20
+    _GAIT_SWING_AMPL = 13
     # low gait - quick
     # _GAIT_SWING_AMPL = 12    
     
     # distance from max. x to center of foot trajectory
     # golden: 35
-    _GAIT_HALF_STRIDE = 35    
+    _GAIT_HALF_STRIDE = 37 
     # low gait - quick    
     # _GAIT_HALF_STRIDE = 25
     
     # amount of additional push of support legs to carry
     # twice the load during swing phase of other 2 legs
     # golden: (0, 0, -5)
-    _GAIT_PUSH_STRENGTH = v3(0, 0, -5)
+    _GAIT_PUSH_STRENGTH = v3(0, 0, -4)
     
     # how long sustain push after touch down of swing legs
     # golden: 0.15
@@ -179,7 +183,7 @@ class constants:
     _GAIT_FWD_GAIN = [1.0, 1.0, 1.0, 1.0]
     
     # y-delta for every phase of turning at the spot
-    _GAIT_TURN_Y = 10
+    _GAIT_TURN_Y = 7
     # x-delta for every phase of turning at the spot
     _GAIT_TURN_X = 30
     
@@ -189,8 +193,13 @@ class constants:
    
     # neutral foot position offset
     # golden: + 15 (depends on body height i guess, here it was -100)
-    FOOT_OFFSET = _GAIT_HALF_STRIDE + 15
-    _GAIT_FOOT_X_OFFSET = [FOOT_OFFSET, FOOT_OFFSET, FOOT_OFFSET, FOOT_OFFSET]
+    # positive values: move feet away from body -> wider stance  
+    SYM_SHIFT = 5
+    # positive values: lean foward 
+    ASYM_SHIFT = 10
+    #ASYM_SHIFT = 0
+    FOOT_OFFSET = _GAIT_HALF_STRIDE + SYM_SHIFT
+    _GAIT_FOOT_X_OFFSET = [FOOT_OFFSET-ASYM_SHIFT, FOOT_OFFSET+ASYM_SHIFT, FOOT_OFFSET-ASYM_SHIFT, FOOT_OFFSET+ASYM_SHIFT]
     _GAIT_FOOT_0_OFFSET = v3(_GAIT_FOOT_X_OFFSET[0], 0.0, 0.0)
     _GAIT_FOOT_1_OFFSET = v3(_GAIT_FOOT_X_OFFSET[1], 0.0, 0.0)
     _GAIT_FOOT_2_OFFSET = v3(_GAIT_FOOT_X_OFFSET[2], 0.0, 0.0)

@@ -19,17 +19,17 @@ from robug_constants import constants as c
         
 class rbjoints:
     
-    def __init__(self, iLegID):
+    def __init__(self, iLegID, lOffs, lGain):
         self.ID   = iLegID
         self.name = c._GAIT_NAME[iLegID]
         # this remaps the femur joint to ID0 and the tibia joint to ID1
         # ... I guess ...
         ID0 = (2*iLegID)
         ID1 = (2*iLegID)+1
-        self.lServoMap  = [c._SERVO_MAP[ID0],  c._SERVO_MAP[ID1]]
-        self.lServoSgn  = [c._SERVO_SGN[ID0],  c._SERVO_SGN[ID1]]
-        self.lServoCal  = [c._SERVO_CAL[ID0],  c._SERVO_CAL[ID1]]
-        self.lServoGain = [c._SERVO_GAIN[ID0], c._SERVO_GAIN[ID1]]        
+        self.lServoMap  = [c._SERVO_MAP[ID0], c._SERVO_MAP[ID1]]
+        self.lServoSgn  = [c._SERVO_SGN[ID0], c._SERVO_SGN[ID1]]
+        self.lServoCal  = [lOffs[ID0], lOffs[ID1]]
+        self.lServoGain = [lGain[ID0], lGain[ID1]]        
         self.lServoPos  = [ 0, 0]
         self.iPwmFreq = c._SERVO_PWM_FREQ
         self.iPwmCycle = 1/c._SERVO_PWM_FREQ

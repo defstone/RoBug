@@ -103,9 +103,23 @@ class rbmocon:
             r.set_direction( 1, 'x')
         elif strSubCmd == '_cmd_BWD_':
             r.set_direction(-1, 'x')
-        else: com.subcommand_unknown()        
+        else: com.subcommand_unknown()
         
-         
+    async def shift_CoM(self, strSubCmd):
+        print('shifting CoM')
+        r = self.r
+        com = self.com
+        if   strSubCmd == '_cmd_FWD_':
+            vTmp = v3(-15, 0, 0)
+            lRelPos = [vTmp, vTmp, vTmp, vTmp]            
+            await r.set_positions_relative(lRelPos, 25)
+        elif strSubCmd == '_cmd_BWD_':
+            vTmp = v3( 15, 0, 0)
+            lRelPos = [vTmp, vTmp, vTmp, vTmp]            
+            await r.set_positions_relative(lRelPos, 25)
+        self.bAcceptNewCmd = True
+        com.command_complete()
+        
     def start_step(self, strSubCmd):
         r = self.r
         com = self.com
@@ -173,19 +187,19 @@ class rbmocon:
                 self.bAcceptNewCmd = True
                 com.command_complete()
                 
-    async def lift_legs(self):
+    async def sit_down(self):
         r = self.r
         com = self.com
         lRelPos = [v3(  0,   0,  40), v3(  0,   0,  40), v3(  0,   0,  40), v3(  0,   0,  40)]
-        await r.set_positions_relative(lRelPos, 10)
+        await r.set_positions_relative(lRelPos, 35)
         self.bAcceptNewCmd = True
         com.command_complete()
         
-    async def push_legs(self):
+    async def stand_up(self):
         r = self.r
         com = self.com        
         lRelPos = [v3(  0,   0, -40), v3(  0,   0, -40), v3(  0,   0, -40), v3(  0,   0, -40)]
-        await r.set_positions_relative(lRelPos, 28)
+        await r.set_positions_relative(lRelPos, 35)
         await asyncio.sleep(0.5)
         self.bAcceptNewCmd = True
         com.command_complete()
@@ -227,8 +241,8 @@ class rbmocon:
         com = self.com
         lTmpPos = []
         
-        yjump = 8
-        xturn = 25
+        yjump = c._GAIT_TURN_Y
+        xturn = c._GAIT_TURN_X
         
         # save foot positions
         for i in range(4):
@@ -255,7 +269,7 @@ class rbmocon:
         # make ground contact
         lRelPos = [v3(0, 0, 0), v3(     0, 0, -3*yjump), v3(    0, 0, -3*yjump), v3(0, 0, 0)]        
         await r.set_positions_relative(lRelPos, 8)         
-        await asyncio.sleep_ms(100)
+        await asyncio.sleep_ms(50)
         
         #restore foot positions
         for i in range(4):
@@ -298,7 +312,7 @@ class rbmocon:
         # make ground contact
         lRelPos = [v3(     0, 0, -3*yjump), v3(0, 0, 0), v3(0, 0, 0), v3(     0, 0, -3*yjump)]        
         await r.set_positions_relative(lRelPos, 8)         
-        await asyncio.sleep_ms(100)
+        await asyncio.sleep_ms(50)
         
         #restore foot positions
         for i in range(4):
@@ -309,7 +323,7 @@ class rbmocon:
         com.command_complete()        
 
     async def run(self):
-
+        
         # aliases for convenience
         r = self.r
         com = self.com
@@ -340,15 +354,17 @@ class rbmocon:
             
             elif strCmd == '_cmd_TURN_RGT_':   await self.turn_r()
             
-            elif strCmd == '_cmd_LIFT_LEGS_':  await self.lift_legs()
+            elif strCmd == '_cmd_SIT_DOWN_':  await self.sit_down()
             
-            elif strCmd == '_cmd_PUSH_LEGS_':  await self.push_legs()
+            elif strCmd == '_cmd_STAND_UP_':  await self.stand_up()
             
             elif strCmd == '_cmd_PURR_':       await self.purr()
             
             elif strCmd == '_cmd_ROTATE_DN_':  await self.rotate_body( 15)
             
             elif strCmd == '_cmd_ROTATE_UP_':  await self.rotate_body(-15)
+            
+            elif strCmd == '_cmd_SHIFT_COM_':  await self.shift_CoM(strSubCmd)            
 
             elif strCmd == '_cmd_EXIT_':
                 

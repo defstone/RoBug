@@ -15,8 +15,10 @@
 
 import math
 import asyncio
+import json
 from time import sleep_ms
 from machine import Pin, PWM, I2C
+
 from tof_sensor import vl53l0x
 from robug_utils import v3
 from robug_constants import constants as c
@@ -29,6 +31,7 @@ from robug_leg import rbleg
 class robug:
 
     def __init__(self):
+        
         self.create_robug()
         self.dirX  = 1
         self.dirZ  = 1
@@ -41,12 +44,12 @@ class robug:
         # distance sensor setup
         self.vl53 = vl53l0x(I2C(c._I2C_BUS, sda=Pin(c._PIN_I2C_SDA), scl=Pin(c._PIN_I2C_SCL), freq=c._I2C_RATE))
         self.vl53.stop_continuous()
-        
+
         # led setup
-        self.freq = c._LED_PWM_FREQ
+        self.freq = c._SERVO_PWM_FREQ
         self.dc = 50
-        self.led_grn = Pin(4)
-        self.led_red = Pin(5)
+        self.led_grn = Pin(c._PIN_LED_GRN)
+        self.led_red = Pin(c._PIN_LED_RED)
         self.pwm_red = PWM(self.led_red)
         self.pwm_grn = PWM(self.led_grn)
         self.pwm_red.freq(self.freq)
@@ -55,7 +58,9 @@ class robug:
         # led init
         self.pwm_grn.duty_u16(pow(2,16)-1)
         self.pwm_red.duty_u16(0)
-        
+        Pin(27, Pin.IN)
+        Pin(28, Pin.IN)
+         
     def touch_top(self):
         tmp = self.touch_top.value()
         if tmp == 1:
@@ -71,7 +76,7 @@ class robug:
             return False    
         
     def get_distance(self):
-        return self.vl53.range        
+        return self.vl53.range
         
     def duty(self, pct):
         return int((pct * pow(2,16))/100)
@@ -83,7 +88,14 @@ class robug:
         self.pwm_grn.duty_u16(self.duty(pct))
 
     def create_robug(self):
-        self.lLeg = [rbleg(0), rbleg(1), rbleg(2), rbleg(3)]
+        with open('robug_calibration.json', 'rt') as f:
+            calib_data = json.load(f)
+            lOffs = calib_data['robug_calibration_data']['servo_offs']
+            lGain = calib_data['robug_calibration_data']['servo_gain']         
+        self.lLeg = [rbleg(0, lOffs, lGain),
+                     rbleg(1, lOffs, lGain),
+                     rbleg(2, lOffs, lGain),
+                     rbleg(3, lOffs, lGain)]
 
     def set_loop_counter(self, Id, i):
         self.lLeg[Id].gait.set_loop_counter(i)
@@ -125,7 +137,7 @@ class robug:
             else:
                 # solve ik with leg.foot_pos
                 self.lLeg[i].solve()
-        # 2.) set joints all at one to minimize delay btwn legs
+        # 2.) set joints all at once to minimize delay btwn legs
         for i in range(4):
             self.lLeg[i].set_joints()
             

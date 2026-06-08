@@ -63,24 +63,13 @@ class rbgait:
         # set up dependent variables
         self.calc_parameters_fullstep()
 
-    def calc_parameters_fullstep_common(self):
+    def calc_parameters_fullstep(self):
         self.ifwd  = self.ifwd_base
         self.irtn  = self.irtn_base
         self.substeps = self.ifwd + self.irtn
         self.ifwd_mid = (self.ifwd/2)
         self.irtn_mid = (self.ifwd + (self.irtn/2))
         self.cycle_mid = self.substeps/2
-
-    def calc_parameters_halfstep_common(self):
-        self.ifwd  = self.ifwd_base
-        self.irtn  = self.irtn_base/2
-        self.substeps = self.ifwd + self.irtn
-        self.ifwd_mid = (self.ifwd/2)
-        self.irtn_mid = (self.ifwd + (self.irtn/2))
-        self.cycle_mid = self.substeps/2        
-
-    def calc_parameters_fullstep(self):
-        self.calc_parameters_fullstep_common()
         self.xreach = self.xmax -self.xmin
         self.dxfwd = self.xreach / self.ifwd
         self.dxrtn = self.xreach / self.irtn
@@ -88,24 +77,6 @@ class rbgait:
         self.daz = pi/self.irtn
         self.ioffset = 0
 
-    def calc_parameters_halfstep_end2center(self):
-        self.calc_parameters_halfstep_common()
-        self.xreach = (self.xmax -self.xmin)/2
-        self.dxfwd = (self.xmax -self.xmin) / self.ifwd
-        self.dxrtn = self.xreach / self.irtn
-        self.az = 0        
-        self.daz = pi/self.irtn
-        self.ioffset = 0
-
-    def calc_parameters_halfstep_center2start(self):
-        self.calc_parameters_halfstep_common()
-        self.xreach = (self.xmax -self.xmin)/2
-        self.dxfwd = (self.xmax -self.xmin) / self.ifwd
-        self.dxrtn = self.xreach / self.irtn
-        self.az = 0
-        self.daz = pi/self.irtn
-        self.ioffset = self.irtn
-        
     def set_dxfwd(self, dl, di):
         self.dxfwd = dl / di
         
@@ -114,26 +85,15 @@ class rbgait:
         
     def set_az(self, rad):
         self.az = rad
-        
+
     def set_daz(self, di):
         self.daz = pi/di
         
     def get_xreach(self):
         return self.xreach
 
-    def stepmode(self, strStepType):
-        if strStepType == 'full':
-            self.calc_parameters_fullstep()
-        elif strStepType == 'half_start':
-            self.calc_parameters_halfstep_center2start()
-        elif strStepType == 'half_stop':
-            self.calc_parameters_halfstep_end2center()
-        else:
-            print('unknown step type')
-            exit()
-            
     def calc_substep_X_abs(self):
-        # calc x(i) independent from history
+        # calc x(i) absolute, independent from history
         if self.i == 0:
             self.xyz.x = self.xmax * self.dirX
         elif self.i > 0 and self.i < self.ifwd:
@@ -144,7 +104,7 @@ class rbgait:
             self.xyz.x = (self.xmin + ((self.i - self.ifwd) * self.dxrtn)) * self.dirX
         else:
             print('error - unkown gait loop phase in calc_substep_X\n')
-            
+
     def get_dx(self, cont = True):
         if cont:
             return self.dxrtn
@@ -155,11 +115,11 @@ class rbgait:
             if   (dt >=    0) and (dt < one3rd): return 0
             elif (dt >= one3rd) and (dt < two3rd): return (self.xreach/one3rd)
             elif (dt >= two3rd) and (dt < c._GAIT_SWING_TICKS): return 0           
-                        
+
     def calc_substep_X_rel(self):
         iP0 = self.cycle_mid-self.irtn        
         iP1 = self.cycle_mid
-        # calc x(i) by increment / decrement
+        # calc x(i) by increment / decrement relative to current position
         if self.i == 0:
             self.xyz.x = self.xmax * self.dirX 
         elif self.i > 0 and self.i < self.ifwd:
@@ -174,13 +134,13 @@ class rbgait:
             self.xyz.x = self.xyz.x + (dx * self.dirX)
         else:
             print('error - unkown gait loop phase in calc_substep_X\n')            
-            
+
     def calc_substep_X(self,bAbs):
         if bAbs: self.calc_substep_X_abs()
         else: self.calc_substep_X_rel()            
             
     def calc_substep_Z_abs(self):
-        # calc az(i) independent from history
+        # calc az(i), absolute, independent from history
         if self.i == 0:
             self.xyz.z = self.zmin
             self.az = 0
@@ -196,9 +156,9 @@ class rbgait:
         else:
             print('error - unkown gait loop phase in calc_substep_Z\n')
         if self.bPush: self.calc_substep_zpush()      
-            
+
     def calc_substep_Z_rel(self):
-        # calc az(i) by increment / decrement        
+        # calc az(i) by increment / decrement relative to current position        
         if self.i == 0:
             self.xyz.z = self.zmin
             self.az = 0

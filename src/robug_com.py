@@ -108,7 +108,15 @@ class rbcom:
         elif strMsg == 'STAND_UP':
             strCmd = '_cmd_STAND_UP_'
             strSubCmd = '_cmd_NA_'
-
+            
+        elif strMsg == 'SHIFT_COM_FWD':
+            strCmd = '_cmd_SHIFT_COM_'
+            strSubCmd = '_cmd_FWD_'
+            
+        elif strMsg == 'SHIFT_COM_BWD':
+            strCmd = '_cmd_SHIFT_COM_'
+            strSubCmd = '_cmd_BWD_'             
+            
         # special case handling
         elif strMsg == '_NOP_':
             strCmd = '_cmd_NOP_'

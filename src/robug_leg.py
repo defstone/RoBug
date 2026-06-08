@@ -24,17 +24,19 @@ from robug_joints import rbjoints
 
 class rbleg:
     
-    def __init__(self, iLegID):
+    def __init__(self, iLegID, lOffs, lGain):
         self.ID = iLegID
         self.name = c._GAIT_NAME[iLegID]
         self.gait = rbgait(iLegID)
         self.ik = rbik()
-        self.joints = rbjoints(iLegID)
+        self.joints = rbjoints(iLegID, lOffs, lGain)
         self.delta = 0.0
         self.gamma = 0.0
         self.deltaTicks = 0
         self.gammaTicks = 0        
         self.foot_pos = v3()
+        self.overlay_pose = v3()
+        self.overlay_pose.set(c._GAIT_FOOT_OFFSET[self.ID])
         
     def rad2ticks(self, rad):
         return (rad-c._PI0P5)/c._SERVO_K        
@@ -59,7 +61,7 @@ class rbleg:
         pos, _ = self.gait.calc_substep('x', bAbs)
         # add constant offset
         self.foot_pos.set(pos)
-        self.foot_pos.add(c._GAIT_FOOT_OFFSET[self.gait.ID])        
+        self.foot_pos.add(self.overlay_pose)        
     
     def calculate_joint_angles(self, bAbs):
         # calculate new foot position (incl. offset)
