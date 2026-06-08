@@ -55,6 +55,7 @@ The firmware follows a modular, asynchronous architecture using MicroPython's `a
          │  (Legs)    │
          └────────────┘
 ```
+<img width="1110" height="553" alt="{F4315BC0-C510-4852-8B46-FF9D1A1D85A0}" src="https://github.com/user-attachments/assets/ca600c6a-3e99-4b61-b4fc-9c89ad67b190" />
 
 ### Key Design Principles
 
