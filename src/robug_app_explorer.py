@@ -27,7 +27,6 @@ from robug_constants import constants as c
 from robug_robot import robug
 from robug_mocon import rbmocon
 from tof_sensor import vl53l0x
-from secrets import SSID, WPWD
 
 async def loop_timer(loop_ms):
     await asyncio.sleep_ms(loop_ms)
@@ -368,10 +367,12 @@ if __name__ == "__main__":
     # set up time slice 
     fLoop = c._GAIT_LOOP_TIME
     
-    # set up RoBug
+    # init RoBug, set start position
     r = robug()
-    r.set_loop_counter_resume()
-    r.instant_update()
+    r.reset_loop_counter()
+    r.calculate_foot_positions()
+    r.solve_ik()
+    r.set_joints() 
     sleep(1)
     
     # set up motion controller
