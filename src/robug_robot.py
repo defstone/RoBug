@@ -59,8 +59,12 @@ class robug:
         self.pwm_grn.duty_u16(pow(2,16)-1)
         self.pwm_red.duty_u16(0)
         Pin(27, Pin.IN)
-        Pin(28, Pin.IN)
-         
+        Pin(28, Pin.IN)       
+
+    #--------------------------------
+    #-- sensor functions ------------
+    #--------------------------------
+        
     def touch_top(self):
         tmp = self.touch_top.value()
         if tmp == 1:
@@ -86,7 +90,11 @@ class robug:
         
     def set_brightness_grn(self, pct):
         self.pwm_grn.duty_u16(self.duty(pct))
-
+        
+    #--------------------------------
+    #-- robot core functions  -------
+    #--------------------------------
+        
     def create_robug(self):
         with open('robug_calibration.json', 'rt') as f:
             calib_data = json.load(f)
@@ -96,11 +104,61 @@ class robug:
                      rbleg(1, lOffs, lGain),
                      rbleg(2, lOffs, lGain),
                      rbleg(3, lOffs, lGain)]
+        
+    def inc_loop_counters(self):
+        for i in range(4):
+            self.lLeg[i].inc_loop_counter()
+            
+    def calculate_foot_positions(self, bAbs=True):
+        for i in range(4):
+            self.lLeg[i].calculate_foot_position(bAbs)
+            
+    def solve_ik(self):
+        for i in range(4):
+            self.lLeg[i].solve()        
+
+    def set_joints(self):
+        for i in range(4):        
+            self.lLeg[i].set_joints()
+            
+    async def set_positions_relative(self, lRelPos, iSteps):
+        ldX = []
+        ldZ = []
+        for i in range(4):
+            # iSteps = 1 -> immediate change
+            # iSteps > 1 -> smooth transition
+            ldX.append(lRelPos[i].x/iSteps)
+            ldZ.append(lRelPos[i].z/iSteps)
+        for i in range(iSteps):
+            for i in range(4):            
+                self.lLeg[i].foot_pos.x += ldX[i] * c._LEG_DIR[i]
+                self.lLeg[i].foot_pos.z += ldZ[i]
+                self.solve_ik()
+                self.set_joints()
+            await asyncio.sleep_ms(c._GAIT_LOOP_TIME)
+            
+    def push_enable(self):
+        for i in range(4):
+            self.lLeg[i].gait.push_enable()
+
+    def push_disable(self):
+        for i in range(4):
+            self.lLeg[i].gait.push_disable()            
+            
+    def deinit_joints(self):
+        for i in range(4):
+            # store servo positions before deinit
+            self.lLegTicks[i] = self.lLeg[i].joints.lServoPos
+            self.lLeg[i].joints.deinit()            
+            
+    #--------------------------------
+    #-- gait loop manipulation ------
+    #--------------------------------            
 
     def set_loop_counter(self, Id, i):
         self.lLeg[Id].gait.set_loop_counter(i)
         
-    def set_loop_counter_resume(self):
+    def reset_loop_counter(self):
         # init diagonal legs with trott phase shift
         for i in range(4):
             self.set_loop_counter(i, c._GAIT_LEG_PHASE_OFFSET[i])
@@ -111,75 +169,11 @@ class robug:
         self.set_loop_counter(1, c._GAIT_SUPPORT_TICKS/2)
         self.set_loop_counter(2, c._GAIT_SUPPORT_TICKS/2)
         self.set_loop_counter(3, c._GAIT_SUPPORT_TICKS + c._GAIT_SWING_TICKS/2)
-
-    def instant_update(self):
-        self.calculate_joint_angles()
-        self.set_joints()       
-
-    def inc_loop_counters(self):
-        for i in range(4):
-            self.lLeg[i].inc_loop_counter()
-
-    def calculate_joint_angles(self, bAbs=True):
-        for i in range(4):
-            self.lLeg[i].calculate_joint_angles(bAbs)
-
-    def set_joints(self):
-        for i in range(4):        
-            self.lLeg[i].set_joints()
             
-    def set_positions(self, lPos):
-        # 1.) solve ik for all legs, results stored in leg inst. 
-        for i in range(4):
-            if isinstance(lPos, list):
-                # solve ik with lPos item
-                self.lLeg[i].solve_ik(lPos[i])
-            else:
-                # solve ik with leg.foot_pos
-                self.lLeg[i].solve()
-        # 2.) set joints all at once to minimize delay btwn legs
-        for i in range(4):
-            self.lLeg[i].set_joints()
+    #--------------------------------
+    #-- robot status ----------------
+    #--------------------------------
             
-    async def set_positions_relative(self, lRelPos, iSteps):
-        ldX = []
-        ldZ = []
-        for i in range(4):
-            ldX.append(lRelPos[i].x/iSteps)
-            ldZ.append(lRelPos[i].z/iSteps)
-        for i in range(iSteps):
-            for i in range(4):            
-                self.lLeg[i].foot_pos.x += ldX[i] * c._LEG_DIR[i]
-                self.lLeg[i].foot_pos.z += ldZ[i]
-                self.set_positions(None)
-            await asyncio.sleep_ms(c._GAIT_LOOP_TIME)             
-            
-    def deinit_joints(self):
-        for i in range(4):
-            # store servo positions before deinit
-            self.lLegTicks[i] = self.lLeg[i].joints.lServoPos
-            self.lLeg[i].joints.deinit()
-
-    def get_loop_length(self):
-        return c._GAIT_SUPPORT_TICKS +c._GAIT_SWING_TICKS
-
-    def get_support_phase_length(self, Id):
-        return self.lLeg[Id].gait.ifwd_base
-
-    def get_swing_phase_length(self,Id):
-        return self.lLeg[Id].gait.irtn_base
-
-    def set_direction(self, dir, strAxis):
-        if   strAxis == 'x': self.dirX = dir
-        elif strAxis == 'z': self.dirZ = dir
-        # apply direction to legs accouting for leg mounting orientation
-        for i in range(4):
-            self.lLeg[i].gait.set_direction(dir * c._LEG_DIR[i], strAxis)
-            
-    def get_direction(self, strAxis):
-        if   strAxis == 'x': return self.dirX
-        elif strAxis == 'z': return self.dirZ 
-
     def is_stable(self):
         bTmp = True
         for i in range(4):
@@ -189,6 +183,13 @@ class robug:
 
     def is_support_phase(self, Id):
         return self.lLeg[Id].gait.is_loop_frame('support_phase')
+    
+    def is_support_phase_any(self):
+        Tmp0 = self.lLeg[0].gait.is_loop_frame('support_phase')
+        Tmp1 = self.lLeg[1].gait.is_loop_frame('support_phase')
+        Tmp2 = self.lLeg[2].gait.is_loop_frame('support_phase')
+        Tmp3 = self.lLeg[3].gait.is_loop_frame('support_phase')
+        return (Tmp0 or Tmp1 or Tmp2 or Tmp3)    
 
     def is_swing_phase(self, Id):
         return self.lLeg[Id].gait.is_loop_frame('swing_phase')
@@ -228,24 +229,34 @@ class robug:
         Tmp1 = self.lLeg[1].gait.is_loop_frame('support_mid')
         Tmp2 = self.lLeg[2].gait.is_loop_frame('support_mid')
         Tmp3 = self.lLeg[3].gait.is_loop_frame('support_mid')
-        return (Tmp0 or Tmp1 or Tmp2 or Tmp3)
+        return (Tmp0 or Tmp1 or Tmp2 or Tmp3)            
+
+    #--------------------------------
+    #-- getters and setters  --------
+    #--------------------------------
+    
+    def get_support_phase_length(self, Id):
+        return self.lLeg[Id].gait.ifwd_base
+
+    def get_swing_phase_length(self,Id):
+        return self.lLeg[Id].gait.irtn_base    
+
+    def get_loop_length(self):
+        return c._GAIT_SUPPORT_TICKS +c._GAIT_SWING_TICKS
+
+    def set_direction(self, dir, strAxis):
+        if   strAxis == 'x': self.dirX = dir
+        elif strAxis == 'z': self.dirZ = dir
+        for i in range(4):
+            # dir * c._LEG_DIR[i] accouts for leg mounting orientation
+            self.lLeg[i].gait.set_direction(dir * c._LEG_DIR[i], strAxis)
+            
+    def get_direction(self, strAxis):
+        if   strAxis == 'x': return self.dirX
+        elif strAxis == 'z': return self.dirZ 
 
     def get_xyz(self, Id):
         return self.lLeg[Id].gait.get_xyz()
 
     def set_xyz(self, Id, xyz):
         self.lLeg[Id].gait.set_xyz(xyz)
-
-    def push_enable(self):
-        for i in range(4):
-            self.lLeg[i].gait.push_enable()
-
-    def push_disable(self):
-        for i in range(4):
-            self.lLeg[i].gait.push_disable()
-            
-    def set_push_impulse(self, xyzStrength):
-        for i in range(4):
-            self.lLeg[Id].gait.xyzImpulse = xyzStrength
-
-

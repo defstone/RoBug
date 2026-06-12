@@ -254,11 +254,9 @@ class rbmocon:
         # push and turn
         lRelPos = [v3(0, 0,  2*yjump), v3( xturn, 0, -1*yjump), v3(-xturn, 0, -1*yjump), v3(0, 0,  2*yjump)]        
         await r.set_positions_relative(lRelPos, 6)
-        await asyncio.sleep_ms(50)        
         # land
         lRelPos = [v3(0, 0, -1*yjump), v3(     0, 0,  2*yjump), v3(     0, 0,  2*yjump), v3(0, 0, -1*yjump)]
         await r.set_positions_relative(lRelPos, 8) 
-        await asyncio.sleep_ms(100)
 
         # lift tips before moving them on x axis
         lRelPos = [v3(0, 0, 0), v3(     0, 0,  1*yjump), v3(    0, 0,  1*yjump), v3(0, 0, 0)]
@@ -269,12 +267,13 @@ class rbmocon:
         # make ground contact
         lRelPos = [v3(0, 0, 0), v3(     0, 0, -3*yjump), v3(    0, 0, -3*yjump), v3(0, 0, 0)]        
         await r.set_positions_relative(lRelPos, 8)         
-        await asyncio.sleep_ms(50)
+        await asyncio.sleep_ms(25)
         
         #restore foot positions
         for i in range(4):
             r.lLeg[i].foot_pos.set_from_list(lTmpPos[i])
-        r.set_positions(None)            
+        r.solve_ik()
+        r.set_joints()
 
         self.bAcceptNewCmd = True
         com.command_complete()
@@ -297,11 +296,9 @@ class rbmocon:
         # push and turn
         lRelPos = [v3(-xturn, 0, -1*yjump), v3(0, 0,  2*yjump), v3(0, 0,  2*yjump), v3( xturn, 0, -1*yjump)]        
         await r.set_positions_relative(lRelPos, 6)
-        await asyncio.sleep_ms(50)         
         # land
         lRelPos = [v3(     0, 0,  2*yjump), v3(0, 0, -1*yjump), v3(0, 0, -1*yjump), v3(     0, 0,  2*yjump)]
         await r.set_positions_relative(lRelPos, 8) 
-        await asyncio.sleep_ms(100)
 
         # lift tips before moving them on x axis
         lRelPos = [v3(     0, 0,  1*yjump), v3(0, 0, 0), v3(0, 0, 0), v3(     0, 0,  1*yjump)]
@@ -312,12 +309,13 @@ class rbmocon:
         # make ground contact
         lRelPos = [v3(     0, 0, -3*yjump), v3(0, 0, 0), v3(0, 0, 0), v3(     0, 0, -3*yjump)]        
         await r.set_positions_relative(lRelPos, 8)         
-        await asyncio.sleep_ms(50)
+        await asyncio.sleep_ms(25)
         
         #restore foot positions
         for i in range(4):
             r.lLeg[i].foot_pos.set_from_list(lTmpPos[i])
-        r.set_positions(None)            
+        r.solve_ik()
+        r.set_joints()           
 
         self.bAcceptNewCmd = True
         com.command_complete()        
@@ -380,6 +378,20 @@ class rbmocon:
                 
             # calculate new joint angles
             if self.bRunLoop:
+                
+                # to include body IK:
+                # run gait generator substep to generate foot positions relative to hip for unrotated body
+                # calculate foot positions relative to center of rotation
+                # rotate body around center by theta = rotate [foot positions relative to center] around center by -theta
+                # rotated foot positions are relative to center of rotation
+                # calculate new foot positions relative to hip
+                # solve ik to generate joint angles
+                # update joints
+                # bam, that's it
+                
                 r.inc_loop_counters()
-                r.calculate_joint_angles(bAbs=False)
+                r.calculate_foot_positions(bAbs=False)
+                r.solve_ik()
+                r.set_joints()
+                
             await timer_task

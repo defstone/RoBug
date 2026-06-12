@@ -107,10 +107,12 @@ if __name__ == "__main__":
     # initialization
     # ----------------------------   
 
-    # set up RoBug
+    # init RoBug, set start position
     r = robug()
-    r.set_loop_counter_resume()
-    r.instant_update()
+    r.reset_loop_counter()
+    r.calculate_foot_positions()
+    r.solve_ik()
+    r.set_joints() 
     sleep(1)
     
     # set up motion controller

@@ -63,11 +63,11 @@ class rbleg:
         self.foot_pos.set(pos)
         self.foot_pos.add(self.overlay_pose)        
     
-    def calculate_joint_angles(self, bAbs):
-        # calculate new foot position (incl. offset)
-        self.calculate_foot_position(bAbs)
-        # solve ik and store leg position
-        self.solve()
+#     def calculate_joint_angles(self, bAbs):
+#         # calculate new foot position (incl. offset)
+#         self.calculate_foot_position(bAbs)
+#         # solve ik and store leg position
+#         self.solve()
         
     def set_joints(self):
         self.joints.set_angles(self.deltaTicks, self.gammaTicks)

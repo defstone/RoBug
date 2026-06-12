@@ -25,7 +25,6 @@ from robug_robot import robug
 from robug_ctrl import rbctrl
 from robug_mocon import rbmocon
 from robug_ble import rbble
-from secrets import SSID, WPWD
 
 # --------------------------------------------------------
 # sensors etc.
@@ -215,10 +214,12 @@ if __name__ == "__main__":
     # setup BLE
     ble = rbble()
 
-    # set up RoBug
+    # init RoBug, set start position
     r = robug()
-    r.set_loop_counter_resume()
-    r.instant_update()
+    r.reset_loop_counter()
+    r.calculate_foot_positions()
+    r.solve_ik()
+    r.set_joints() 
     sleep(1)
     
     # set up ADC
