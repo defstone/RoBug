@@ -38,21 +38,19 @@ class rbleg:
         self.overlay_pose = v3()
         self.overlay_pose.set(c._GAIT_FOOT_OFFSET[self.ID])
         
+    #--------------------------------
+    #-- helper functions ------------
+    #--------------------------------        
+        
     def rad2ticks(self, rad):
-        return (rad-c._PI0P5)/c._SERVO_K        
+        return (rad-c._PI0P5)/c._SERVO_K
+    
+    #--------------------------------
+    #-- leg core functions ----------
+    #--------------------------------     
         
     def inc_loop_counter(self):
         self.gait.loop_inc()
-    
-    def solve(self):
-        # print(self.ID, ' solve: ', self.foot_pos)
-        self.delta, self.gamma = self.ik.solve(self.foot_pos)
-        self.deltaTicks = self.rad2ticks(self.delta)
-        self.gammaTicks = self.rad2ticks(self.gamma)
-        
-    def solve_ik(self, pos):
-        self.foot_pos.set(pos)
-        self.solve()
         
     def calculate_foot_position(self, bAbs):
         # calculate new z value
@@ -63,19 +61,24 @@ class rbleg:
         self.foot_pos.set(pos)
         self.foot_pos.add(self.overlay_pose)        
     
-#     def calculate_joint_angles(self, bAbs):
-#         # calculate new foot position (incl. offset)
-#         self.calculate_foot_position(bAbs)
-#         # solve ik and store leg position
-#         self.solve()
+    def solve(self):
+        # print(self.ID, ' solve: ', self.foot_pos)
+        self.delta, self.gamma = self.ik.solve(self.foot_pos)
+        self.deltaTicks = self.rad2ticks(self.delta)
+        self.gammaTicks = self.rad2ticks(self.gamma)
         
     def set_joints(self):
         self.joints.set_angles(self.deltaTicks, self.gammaTicks)
         
-    def set_position(self, pos):
+    #--------------------------------
+    #-- getters and setters  --------
+    #--------------------------------
+        
+    def set_foot_pos(pos):
         self.foot_pos.set(pos)
-        self.solve()        
-        self.set_joints()
+    
+    def get_foot_pos(self):
+        return(v3(self.foot_pos.x, self.foot_pos.y, self.foot_pos.z))
         
     def set_delta(self, delta):
         self.delta = delta
@@ -88,4 +91,3 @@ class rbleg:
         
     def get_gamma(self):
         return self.gamma         
-

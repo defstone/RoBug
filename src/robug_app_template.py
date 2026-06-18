@@ -80,8 +80,8 @@ async def simplest_test():
     await asyncio.sleep(5)
     
     await rc.stop_fwd()
-    await rc.shift_com_bwd()
-    reset_overlay_pose()
+    #await rc.shift_com_bwd()
+    #reset_overlay_pose()
     
 
 # --------------------------------------------------------
