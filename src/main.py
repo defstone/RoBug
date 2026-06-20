@@ -53,23 +53,27 @@ async def get_distance():
     lTmp.sort()
     return int((lTmp[2]+lTmp[3])/2)
 
+async def get_soc():
+    # store voltage of multiples of 10mV
+    voltage = int((adc.read_u16() * cf) / 0.01)
+    if voltage < 0: voltage = 0
+    await asyncio.sleep_ms(50)
+    return voltage
+
 async def serve_sensor_data():
     global distance
+    global soc
     print("sensor server up and running")
     while True:
         distance = await get_distance()
-        ble.value = distance
-        # print(distance)
+        soc = await get_soc()
+        ble.dist = distance
+        ble.soc = soc
+        print(distance, soc)
         await asyncio.sleep_ms(250)
-        
-async def get_battery_voltage():
-    while True:
-        voltage = adc.read_u16() * cf
-        print("Voltage: {:.2f} V".format(voltage))
-        await asyncio.sleep_ms(500) 
-           
+             
 # --------------------------------------------------------
-# application: first-person-view remote control
+# application: bluetooth low energy remote control
 # --------------------------------------------------------
 async def fpv_rc(b):
     global RoBugState, distance
@@ -140,7 +144,7 @@ async def fpv_rc(b):
         # -------------------------------------------------         
             if cmd != 'STOP':
                 await rc.turn(-1, 1)
-                # await asyncio.sleep(0.05)
+                await asyncio.sleep(0.05)
             else:
                 RoBugState = 'idle'
                 
@@ -149,7 +153,7 @@ async def fpv_rc(b):
         # -------------------------------------------------         
             if cmd != 'STOP':
                 await rc.turn( 1, 1)
-                # await asyncio.sleep(0.05)
+                await asyncio.sleep(0.05)
             else:
                 RoBugState = 'idle'                  
 
@@ -184,7 +188,6 @@ if __name__ == "__main__":
         
         # start sensor tasks
         task_dist = asyncio.create_task(serve_sensor_data())
-        task_adc  = asyncio.create_task(get_battery_voltage())
         
         # start any tasks that need to run concurrently
         # no LEDs yet
@@ -200,7 +203,6 @@ if __name__ == "__main__":
         await task_rc
         task_ble.cancel()    
         task_dist.cancel()
-        task_adc.cancel()
         task_led.cancel()
         task_mc.cancel()        
         
@@ -208,8 +210,10 @@ if __name__ == "__main__":
     # initialization
     # ----------------------------   
     
-    # init distance value
+    # declare global variables 
+    RoBugState = ''
     distance = 9999
+    soc = 9999
     
     # setup BLE
     ble = rbble()
@@ -234,16 +238,10 @@ if __name__ == "__main__":
     rc = rbctrl(MsgQueue, RplyQueue)
     m = rbmocon(r, MsgQueue, RplyQueue)
     
-    # declare global variables 
-    RoBugState = ''
-    dist = 0
-    
     # start tasks
     asyncio.run(main())
     
     # clean up and shut down
-    # r.set_brightness_red(0)
-    # r.set_brightness_grn(100)
-    
+    r.set_brightness_red(50)
+    r.set_brightness_grn(50)
     # r.deinit() 
- 

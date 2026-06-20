@@ -119,31 +119,7 @@ class rbmocon:
             lRelPos = [vTmp, vTmp, vTmp, vTmp]            
             await r.set_positions_relative(lRelPos, 25)
         self.bAcceptNewCmd = True
-        com.command_complete()
-        
-    def start_step(self, strSubCmd):
-        r = self.r
-        com = self.com
-        self.set_direction(strSubCmd)
-
-        if self.iPhase == 1:
-            r.push_disable()                    
-            self.bRunLoop = True
-            r.lLeg[0].gait.set_az(0)
-            r.lLeg[3].gait.set_az(0)                    
-            self.iPhase = 2
-            
-        elif self.iPhase == 2:
-            if r.is_support_end(1):
-                r.lLeg[0].gait.calc_gait_parameters()
-                r.lLeg[1].gait.calc_gait_parameters()
-                r.lLeg[2].gait.calc_gait_parameters()
-                r.lLeg[3].gait.calc_gait_parameters()
-                self.iPhase = 1
-                r.push_enable() 
-                self.bRunLoop = False
-                self.bAcceptNewCmd = True
-                com.command_complete()                
+        com.command_complete()               
                 
     def resume(self, strSubCmd):
         r = self.r
@@ -161,47 +137,67 @@ class rbmocon:
             self.bRunLoop = False
             self.bAcceptNewCmd = True
             com.command_complete()         
-         
-    def stop_step(self, strSubCmd):
-        r = self.r
-        com = self.com
-        self.set_direction(strSubCmd)        
-        
-        if self.iPhase == 1:
-            if r.is_support_end(0):
-                center = r.lLeg[0].gait.get_support_mid()
-                xreach = r.lLeg[0].gait.get_xyz().x * -1
-                di     = center - r.lLeg[1].gait.get_loop_counter()
-                print('comp: ', xreach, r.lLeg[0].foot_pos.x)
-                r.lLeg[0].gait.set_dxrtn(xreach, di)
-                r.lLeg[0].gait.set_daz(di)                        
-                r.lLeg[3].gait.set_dxrtn(xreach, di)                            
-                r.lLeg[3].gait.set_daz(di)
-                # disable support leg z-push for clean stop position
-                print(r.lLeg[0].gait.dxrtn, di)
-                print(xreach)
-                r.push_disable()
-                self.iPhase = 2
-                
-        elif self.iPhase == 2:
-            if r.is_support_mid(1):
-                print(r.lLeg[0].gait.get_xyz().x)                
-                self.iPhase = 1
-                self.bRunLoop = False  
-                self.bAcceptNewCmd = True
-                com.command_complete()
                 
     async def start_animation(self, strSubCmd):
         r = self.r
         com = self.com
-        pos_ls = self.pos_ls
-        self.bRunLoop = False                
-                
+        self.bRunLoop = False
+        self.set_direction(strSubCmd)
+        r.push_disable()
 
+        # capture current positions in leg space
+        pos_ls_current = [r.lLeg[i].get_foot_pos() for i in range(4)]
+        # reset counter to start position 
+        r.reset_loop_counter()
+        # calculate goal position in leg space
+        r.calculate_foot_positions(bAbs=True)
+        pos_ls_goal = [r.lLeg[i].get_foot_pos() for i in range(4)]
+        # leg0 is reference leg, needs c._GAIT_SWING_TICKS/2
+        # from support path midpoint to support path start
+        di = c._GAIT_SWING_TICKS/2
+        # calculate dx[]
+        dx = [(pos_ls_goal[i].x - pos_ls_current[i].x)/di for i in range(4)]
+        x = [0, 0, 0, 0]
+                
+        # angle steps for halfsine trajectory
+        da  = c._PI / di
+        a   = 0        
+        daz = 0
+        
+        # animation        
+        for _ in range(di):
+            
+            # start timer task
+            timer_task = asyncio.create_task(self.timeSlice(self.fLoopTime))
+            
+            # z contribution of arc (halfsine)
+            a += da
+            daz = c._GAIT_SWING_AMPL * math.sin(a)
+            
+            for i in range(4):
+                # increment x/z pos. for all legs                
+                x[i] += dx[i]
+                # foot_pos is the physical pos in leg space
+                r.lLeg[i].foot_pos.x = pos_ls_current[i].x + x[i]
+                
+            # superimpose arc trajectory on leg 0 and 3
+            r.lLeg[0].foot_pos.z = pos_ls_current[0].z + daz
+            r.lLeg[3].foot_pos.z = pos_ls_current[3].z + daz
+            # solve ik for all legs
+            r.solve_ik()
+            # update joints of all legs                
+            r.set_joints()
+            # wait for timer completion
+            await timer_task
+            
+        # clean up
+        r.push_enable()        
+        self.bAcceptNewCmd = True
+        com.command_complete()
+                
     async def stop_animation(self, strSubCmd):
         r = self.r
         com = self.com
-        pos_ls = self.pos_ls
         self.bRunLoop = False 
         
         # loop counter value of support path midpoint
@@ -216,17 +212,12 @@ class rbmocon:
         # calculate dx per tick, move towards center (x=0 in gait space)
         # target x = c._FOOT_XOFFSET in leg space
         dx = [((pos_ls[i].x - c._FOOT_XOFFSET) / di) * -1 for i in range(4)]
-        print('dx: ', dx)
         x = [0, 0, 0, 0]        
         
         # calculate dz per tick so that after di ticks
         # all z-values are c._GAIT_HEIGHT
         dz = [(c._GAIT_HEIGHT-pos_ls[i].z) / di for i in range(4)]
-        print('dz: ', dz)       
         z = [0, 0, 0, 0]
-                
-        # absolute feet postion in leg space
-        # pos_ls = [r.lLeg[i].get_foot_pos() for i in range(4)]
         
         # angle steps for halfsine trajectory
         da  = c._PI / di
@@ -253,20 +244,17 @@ class rbmocon:
                 
             # superimpose arc trajectory on leg 0 and 3
             r.lLeg[0].foot_pos.z += daz
-            r.lLeg[3].foot_pos.z += daz    
-                
+            r.lLeg[3].foot_pos.z += daz
             # solve ik for all legs
-            for i in range(4):
-                print('new foot x-position: ', i, r.lLeg[i].foot_pos, math.degrees(a)) 
-                r.lLeg[i].solve()
-                
+            r.solve_ik()
             # update joints of all legs                
-            for i in range(4):
-                r.lLeg[i].set_joints()
-                   
+            r.set_joints()
             # wait for timer completion
             await timer_task
-            
+
+        for i in range(4):
+            print(r.lLeg[i].foot_pos)
+        
         # clean up
         self.bAcceptNewCmd = True
         com.command_complete()
@@ -429,7 +417,8 @@ class rbmocon:
             # process current cmd/subcmd
             if   strCmd == '_cmd_NOP_':        self.bAcceptNewCmd = True
             
-            elif strCmd == '_cmd_START_STEP_': self.start_step(strSubCmd)
+            # elif strCmd == '_cmd_START_STEP_': self.start_step(strSubCmd)
+            elif strCmd == '_cmd_START_STEP_': await self.start_animation(strSubCmd)            
                   
             elif strCmd == '_cmd_RESUME_':     self.resume(strSubCmd)
             

@@ -39,6 +39,7 @@ class rbgait:
         self.ifwd   = c._GAIT_SUPPORT_TICKS
         self.irtn   = c._GAIT_SWING_TICKS
         self.xyzImpulse = c._GAIT_PUSH_STRENGTH
+        self.gain = c._GAIT_FWD_GAIN[self.ID]
 
         # internal loop counters
         self.i = int(c._GAIT_SUPPORT_TICKS/2)
@@ -130,7 +131,7 @@ class rbgait:
         if self.i == 0:
             self.xyz.x = self.xmax * self.dirX 
         elif self.i > 0 and self.i < self.ifwd:
-            if self.i > iP0 and self.i < iP1: k = c._GAIT_FWD_GAIN[self.ID]
+            if self.i > iP0 and self.i < iP1: k = self.gain
             else: k =1.0
             self.xyz.x = self.xyz.x - (self.dxfwd * k * self.dirX)
         elif self.i == self.ifwd:

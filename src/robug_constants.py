@@ -122,7 +122,7 @@ class constants:
     # loop update rate in ms
     # golden: 11
     # speedy: 8
-    _GAIT_LOOP_TIME = 40
+    _GAIT_LOOP_TIME = 10
     
     # height over ground
     # ref: shoulder joint
@@ -153,7 +153,7 @@ class constants:
     # highest swing back point rel to _GAIT_HEIGHT
     # golden: -15
     # _GAIT_SWING_AMPL = -25
-    _GAIT_SWING_AMPL = 10
+    _GAIT_SWING_AMPL = 12
     # low gait - quick
     # _GAIT_SWING_AMPL = 12    
     
@@ -182,7 +182,9 @@ class constants:
     # test successfull -> right curve
     # _GAIT_FWD_GAIN = [3.0, 1.0, 1.0, 0.4]
     # _GAIT_FWD_GAIN = [2.0, 1.0, 1.0, 0.4]
-    _GAIT_FWD_GAIN = [1.5, 1.0, 1.0, 1.0]
+    # _GAIT_FWD_GAIN = [2.5, 1.0, 1.0, 0.25]
+    _GAIT_FWD_GAIN = [1.0, 1.0, 1.0, 1.0]
+    
     
     # y-delta for every phase of turning at the spot
     _GAIT_TURN_Y = 7
@@ -200,7 +202,7 @@ class constants:
     # SYM_SHIFT = 0
     # positive values: lean foward 
     # ASYM_SHIFT = 10
-    _ASYM_XSHIFT = 0
+    _ASYM_XSHIFT = 10
     _FOOT_XOFFSET = _GAIT_HALF_STRIDE + _SYM_XSHIFT
     # FOOT_OFFSET = 0    
     _GAIT_FOOT_X_OFFSET = [_FOOT_XOFFSET-_ASYM_XSHIFT, _FOOT_XOFFSET+_ASYM_XSHIFT, _FOOT_XOFFSET-_ASYM_XSHIFT, _FOOT_XOFFSET+_ASYM_XSHIFT]
