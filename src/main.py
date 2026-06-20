@@ -238,6 +238,10 @@ if __name__ == "__main__":
     rc = rbctrl(MsgQueue, RplyQueue)
     m = rbmocon(r, MsgQueue, RplyQueue)
     
+    # declare global variables 
+    RoBugState = ''
+    dist = 0
+    
     # start tasks
     asyncio.run(main())
     
