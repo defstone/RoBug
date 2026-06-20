@@ -26,18 +26,22 @@ class rbble:
         self.SERVICE_UUID = bluetooth.UUID('7f257115-9cdd-4e63-81f8-ca2bb1fad841')
         self.CHAR_UUID1   = bluetooth.UUID('ba3ca205-e3fb-4727-ad69-878bb3038b00')
         self.CHAR_UUID2   = bluetooth.UUID('ba3ca205-e3fb-4727-ad69-878bb3038b01')
+        self.CHAR_UUID3   = bluetooth.UUID('ba3ca205-e3fb-4727-ad69-878bb3038b02')        
 
         # service + characteristic
         self.service = aioble.Service(self.SERVICE_UUID)
         # write characterisic -> set 'write_no_response=True' to avoid blocking of R/C android app 
         self.char_cmd = aioble.Characteristic(self.service, self.CHAR_UUID1, write=True, write_no_response=True)
-        # read + notify characterisic
-        self.char_notify = aioble.Characteristic(self.service, self.CHAR_UUID2, read=True, notify=True)        
+        # read + notify characterisic for distance data
+        self.char_notify_dist = aioble.Characteristic(self.service, self.CHAR_UUID2, read=True, notify=True)
+        # read + notify characterisic for battery level
+        self.char_notify_soc = aioble.Characteristic(self.service, self.CHAR_UUID3, read=True, notify=True)        
         #register service with one characteristic: write
         aioble.register_services(self.service)
         
         self.cmd = 'STOP'
-        self.value = 9999
+        self.dist = 9999
+        self.soc  = 9999        
         self.mode = 'rc'
         self.code = 0xFF
 
@@ -71,13 +75,17 @@ class rbble:
         self.code = 0xFF
         return tmp    
     
-    async def send_data(self, connection):
+    async def send_data_dist(self, connection):
         while connection.is_connected():        
-            data = struct.pack('<I', self.value)
-            # NOTIFY AND WRITE ARE NOT FUCKING AWAITABLE
-            # ARGHHHH
-            self.char_notify.notify(connection, data)
+            data = struct.pack('<I', self.dist)
+            self.char_notify_dist.notify(connection, data)
             await asyncio.sleep_ms(500)
+            
+    async def send_data_soc(self, connection):
+        while connection.is_connected():        
+            data = struct.pack('<I', self.soc)
+            self.char_notify_soc.notify(connection, data)
+            await asyncio.sleep(2)            
 
     async def receive_cmd(self, connection):
         while connection.is_connected():
@@ -97,9 +105,10 @@ class rbble:
             print('Connected!')
 
             async with connection:
-                tx_task = asyncio.create_task(self.send_data(connection))
-                rx_task = asyncio.create_task(self.receive_cmd(connection))
-                await asyncio.gather(tx_task, rx_task)
+                tx_task0 = asyncio.create_task(self.send_data_dist(connection))
+                tx_task1 = asyncio.create_task(self.send_data_soc(connection))                
+                rx_task0 = asyncio.create_task(self.receive_cmd(connection))
+                await asyncio.gather(tx_task0, tx_task1, rx_task0)
                 
     def set_mode(self, mode):
         self.mode = mode

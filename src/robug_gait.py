@@ -39,10 +39,10 @@ class rbgait:
         self.ifwd   = c._GAIT_SUPPORT_TICKS
         self.irtn   = c._GAIT_SWING_TICKS
         self.xyzImpulse = c._GAIT_PUSH_STRENGTH
+        self.gain = c._GAIT_FWD_GAIN[self.ID]
 
         # internal loop counters
         self.i = int(c._GAIT_SUPPORT_TICKS/2)
-        self.ioffset = 0
         self.incr  = c._GAIT_LOOP_INC
         self.j = 0
 
@@ -61,9 +61,13 @@ class rbgait:
         self.state = 'move'
 
         # set up dependent variables
-        self.calc_parameters_fullstep()
-
-    def calc_parameters_fullstep(self):
+        self.calc_gait_parameters()
+        
+    #--------------------------------
+    #-- gait core functions  -------
+    #--------------------------------
+    
+    def calc_gait_parameters(self):
         self.ifwd  = self.ifwd_base
         self.irtn  = self.irtn_base
         self.substeps = self.ifwd + self.irtn
@@ -74,37 +78,30 @@ class rbgait:
         self.dxfwd = self.xreach / self.ifwd
         self.dxrtn = self.xreach / self.irtn
         self.az = 0
-        self.daz = pi/self.irtn
-        self.ioffset = 0
-
-    def set_dxfwd(self, dl, di):
-        self.dxfwd = dl / di
-        
-    def set_dxrtn(self, dl, di):
-        self.dxtrn = dl / di
-        
-    def set_az(self, rad):
-        self.az = rad
-
-    def set_daz(self, di):
-        self.daz = pi/di
-        
-    def get_xreach(self):
-        return self.xreach
-
-    def calc_substep_X_abs(self):
-        # calc x(i) absolute, independent from history
+        self.daz = pi/self.irtn    
+    
+    def loop_inc(self):  
+        self.i += self.incr
+        if self.i < 0:
+            self.i = (self.substeps-1)
+        elif self.i >= self.substeps:
+            self.i = 0
         if self.i == 0:
-            self.xyz.x = self.xmax * self.dirX
+            self.phase = 1
         elif self.i > 0 and self.i < self.ifwd:
-            self.xyz.x = (self.xmax - (self.dxfwd * self.i)) * self.dirX
+            self.phase = 2
         elif self.i == self.ifwd:
-            self.xyz.x = self.xmin * self.dirX
+            self.phase = 3
         elif self.i > self.ifwd and self.i < self.substeps:
-            self.xyz.x = (self.xmin + ((self.i - self.ifwd) * self.dxrtn)) * self.dirX
+            self.phase = 4
         else:
-            print('error - unkown gait loop phase in calc_substep_X\n')
-
+            print('error - unkown gait loop phase in calc_substep_x\n')
+            self.phase = 5    
+    
+    #-- x-axis handling ----------------------
+    # _abs functions: calc x(i) absolute, independent from previous state        
+    # _rel functions: calc x(i) by increment / decrement relative to x(i-1)            
+        
     def get_dx(self, cont = True):
         if cont:
             return self.dxrtn
@@ -114,33 +111,59 @@ class rbgait:
             two3rd = 2 * c._GAIT_SWING_TICKS/3
             if   (dt >=    0) and (dt < one3rd): return 0
             elif (dt >= one3rd) and (dt < two3rd): return (self.xreach/one3rd)
-            elif (dt >= two3rd) and (dt < c._GAIT_SWING_TICKS): return 0           
-
-    def calc_substep_X_rel(self):
+            elif (dt >= two3rd) and (dt < c._GAIT_SWING_TICKS): return 0    
+    
+    def calc_substep_x_abs(self):
+        if self.i == 0:
+            self.xyz.x = self.xmax * self.dirX
+        elif self.i > 0 and self.i < self.ifwd:
+            self.xyz.x = (self.xmax - (self.dxfwd * self.i)) * self.dirX
+        elif self.i == self.ifwd:
+            self.xyz.x = self.xmin * self.dirX
+        elif self.i > self.ifwd and self.i < self.substeps:
+            self.xyz.x = (self.xmin + ((self.i - self.ifwd) * self.dxrtn)) * self.dirX
+        else:
+            print('error - unkown gait loop phase in calc_substep_x\n')
+            
+    def calc_substep_x_rel(self):
         iP0 = self.cycle_mid-self.irtn        
         iP1 = self.cycle_mid
-        # calc x(i) by increment / decrement relative to current position
         if self.i == 0:
             self.xyz.x = self.xmax * self.dirX 
         elif self.i > 0 and self.i < self.ifwd:
-            if self.i > iP0 and self.i < iP1: k = c._GAIT_FWD_GAIN[self.ID]
+            if self.i > iP0 and self.i < iP1: k = self.gain
             else: k =1.0
             self.xyz.x = self.xyz.x - (self.dxfwd * k * self.dirX)
         elif self.i == self.ifwd:
             self.xyz.x = self.xyz.x - (self.dxfwd * self.dirX)
             self.dxrtn = (self.xmax - (self.xyz.x * self.dirX)) / self.irtn
         elif self.i > self.ifwd and self.i < self.substeps:
-            dx = self.get_dx()
-            self.xyz.x = self.xyz.x + (dx * self.dirX)
+            self.xyz.x = self.xyz.x + (self.dxrtn * self.dirX)
         else:
-            print('error - unkown gait loop phase in calc_substep_X\n')            
+            print('error - unkown gait loop phase in calc_substep_x\n')            
 
-    def calc_substep_X(self,bAbs):
-        if bAbs: self.calc_substep_X_abs()
-        else: self.calc_substep_X_rel()            
+    def calc_substep_x(self,bAbs):
+        if bAbs: self.calc_substep_x_abs()
+        else: self.calc_substep_x_rel()
+     
+    #-- z-axis handling ----------------------
+        
+    # supoort legs push harder when swing legs swing back
+    # keep pushing when swing legs touch down to mitigate impact
+    def calc_substep_zpush(self):
+        iP0 = self.cycle_mid-self.irtn        
+        iP1 = self.cycle_mid
+        iTmpZ = 0
+        if self.i > 0 and self.i <= self.ifwd:
+            if self.i >= iP0 and self.i < iP1:
+                iTmpZ = self.xyzImpulse.z
+            elif self.i >= iP1 and self.i < iP1 + c._GAIT_PUSH_OVERLAP:
+                iTmpZ = self.xyzImpulse.z/c._GAIT_OVERLAP_PUSH_FACTOR
+        elif self.i < 0 or self.i > self.substeps:
+            print('error - unkown gait loop phase in calc_substep_push\n')
+        self.xyz.z = self.xyz.z + iTmpZ        
             
-    def calc_substep_Z_abs(self):
-        # calc az(i), absolute, independent from history
+    def calc_substep_z_abs(self):
         if self.i == 0:
             self.xyz.z = self.zmin
             self.az = 0
@@ -151,14 +174,13 @@ class rbgait:
             self.xyz.z = self.zmin
             self.az = 0            
         elif self.i > self.ifwd and self.i < self.substeps:
-            self.az = self.daz * (self.i - self.ioffset - self.ifwd)
+            self.az = self.daz * (self.i - self.ifwd)
             self.xyz.z = self.zmin + (self.zampl * sin(self.az))
         else:
-            print('error - unkown gait loop phase in calc_substep_Z\n')
+            print('error - unkown gait loop phase in calc_substep_z\n')
         if self.bPush: self.calc_substep_zpush()      
 
-    def calc_substep_Z_rel(self):
-        # calc az(i) by increment / decrement relative to current position        
+    def calc_substep_z_rel(self):
         if self.i == 0:
             self.xyz.z = self.zmin
             self.az = 0
@@ -172,55 +194,34 @@ class rbgait:
             self.az = self.az + self.daz
             self.xyz.z = self.zmin + (self.zampl * sin(self.az))
         else:
-            print('error - unkown gait loop phase in calc_substep_Z\n')
+            print('error - unkown gait loop phase in calc_substep_z\n')
         if self.bPush: self.calc_substep_zpush()
         
-    def calc_substep_Z(self,bAbs):
-        if bAbs: self.calc_substep_Z_abs()
-        else: self.calc_substep_Z_rel()
-
-    def calc_substep_zpush(self):
-        # swing phase of other leg pair is from P0 to P1
-        iP0 = self.cycle_mid-self.irtn        
-        iP1 = self.cycle_mid
-        # normal = no additional push
-        iTmpZ = 0
-        if self.i > 0 and self.i <= self.ifwd:
-            # while swing legs don't support body push harder to carry load   
-            if self.i >= iP0 and self.i < iP1:
-                iTmpZ = self.xyzImpulse.z
-            # keep push after swing legs touch down to mitigate impact  
-            elif self.i >= iP1 and self.i < iP1 + c._GAIT_PUSH_OVERLAP:
-                iTmpZ = self.xyzImpulse.z/c._GAIT_OVERLAP_PUSH_FACTOR
-        elif self.i < 0 or self.i > self.substeps:
-            print('error - unkown gait loop phase in calc_substep_push\n')
-        self.xyz.z = self.xyz.z + iTmpZ
+    def calc_substep_z(self,bAbs):
+        if bAbs: self.calc_substep_z_abs()
+        else: self.calc_substep_z_rel()
+        
+    #--------------------------------
         
     def calc_substep(self, strAxis, bAbs):
         if strAxis == 'x':
-            self.calc_substep_X(bAbs)
+            self.calc_substep_x(bAbs)
             phase = self.phase
         elif strAxis == 'z':
-            self.calc_substep_Z(bAbs)
+            self.calc_substep_z(bAbs)
             phase = self.phase
         return self.xyz, phase
 
-    def loop_inc(self):
-        self.i += self.incr
-        if self.i < 0: self.i = (self.substeps-1)
-        elif self.i >= self.substeps: self.i = 0
-        if self.i == 0:
-            self.phase = 1
-        elif self.i > 0 and self.i < self.ifwd:
-            self.phase = 2
-        elif self.i == self.ifwd:
-            self.phase = 3
-        elif self.i > self.ifwd and self.i < self.substeps:
-            self.phase = 4
-        else:
-            print('error - unkown gait loop phase in calc_substep_X\n')
-            self.phase = 5
-
+    #--------------------------------
+    #-- gait status  ----------------
+    #--------------------------------
+            
+    def set_loop_counter(self, i):
+        self.i = i            
+            
+    def get_loop_counter(self):
+        return self.i            
+            
     def is_loop_frame(self, strKey):
         # mode
         if   strKey == 'support_start': a = [1]
@@ -239,18 +240,36 @@ class rbgait:
     def set_direction(self, dir, strAxis):
         if   strAxis == 'x': self.dirX = dir
         elif strAxis == 'z': self.dirZ = dir
+        
+    #--------------------------------
+    #-- getters and setters  --------
+    #--------------------------------
+        
+    def get_xreach(self):
+        return self.xreach
+    
+    def get_support_mid(self):
+        return self.ifwd_mid
 
-    def set_loop_counter(self, i):
-        self.i = i
-      
-    def get_loop_counter(self):
-        return self.i
+    def set_dxfwd(self, dl, di):
+        self.dxfwd = dl / di
+        
+    def set_dxrtn(self, dl, di):
+        print(dl, di)
+        self.dxtrn = dl / di
+        print(self.dxtrn)
+        
+    def set_az(self, rad):
+        self.az = rad
 
-    def get_xyz(self):
-        return self.xyz
+    def set_daz(self, di):
+        self.daz = pi/di
 
     def set_xyz(self, xyz):
         self.xyz.set(xyz)
+        
+    def get_xyz(self):
+        return self.xyz        
         
     def push_enable(self):
         self.bPush = True

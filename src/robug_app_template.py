@@ -68,20 +68,20 @@ def reset_overlay_pose():
 async def simplest_test():
     
     await rc.init_pose()
-    lPose_Neutral = current_pose()
+    # lPose_Neutral = current_pose()
     
     await asyncio.sleep(1)
     
-    await rc.shift_com_fwd()
-    lPose_Fwd = current_pose()
-    calc_overlay_pose(lPose_Neutral, lPose_Fwd)
+    # await rc.shift_com_fwd()
+    # lPose_Fwd = current_pose()
+    # calc_overlay_pose(lPose_Neutral, lPose_Fwd)
     
     await rc.start_to_walk_fwd()
     await asyncio.sleep(5)
     
     await rc.stop_fwd()
-    await rc.shift_com_bwd()
-    reset_overlay_pose()
+    #await rc.shift_com_bwd()
+    #reset_overlay_pose()
     
 
 # --------------------------------------------------------
@@ -125,6 +125,6 @@ if __name__ == "__main__":
     asyncio.run(main())
     
     # clean up and shut down
-    # r.set_brightness_red(0)
-    # r.set_brightness_grn(100)
+    r.set_brightness_red(100)
+    r.set_brightness_grn(0)
 

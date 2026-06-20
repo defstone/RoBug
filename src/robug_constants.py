@@ -32,6 +32,7 @@ class constants:
     
     # ------- pre-calculated values -------
     
+    _PI = pi
     _PI0P5 = pi/2
     
     # ------- physical paramters -------
@@ -121,7 +122,7 @@ class constants:
     # loop update rate in ms
     # golden: 11
     # speedy: 8
-    _GAIT_LOOP_TIME = 8
+    _GAIT_LOOP_TIME = 10
     
     # height over ground
     # ref: shoulder joint
@@ -152,7 +153,7 @@ class constants:
     # highest swing back point rel to _GAIT_HEIGHT
     # golden: -15
     # _GAIT_SWING_AMPL = -25
-    _GAIT_SWING_AMPL = 13
+    _GAIT_SWING_AMPL = 12
     # low gait - quick
     # _GAIT_SWING_AMPL = 12    
     
@@ -180,7 +181,10 @@ class constants:
     # gain for direction change
     # test successfull -> right curve
     # _GAIT_FWD_GAIN = [3.0, 1.0, 1.0, 0.4]
+    # _GAIT_FWD_GAIN = [2.0, 1.0, 1.0, 0.4]
+    # _GAIT_FWD_GAIN = [2.5, 1.0, 1.0, 0.25]
     _GAIT_FWD_GAIN = [1.0, 1.0, 1.0, 1.0]
+    
     
     # y-delta for every phase of turning at the spot
     _GAIT_TURN_Y = 7
@@ -194,12 +198,14 @@ class constants:
     # neutral foot position offset
     # golden: + 15 (depends on body height i guess, here it was -100)
     # positive values: move feet away from body -> wider stance  
-    SYM_SHIFT = 5
+    _SYM_XSHIFT = 5
+    # SYM_SHIFT = 0
     # positive values: lean foward 
-    ASYM_SHIFT = 10
-    #ASYM_SHIFT = 0
-    FOOT_OFFSET = _GAIT_HALF_STRIDE + SYM_SHIFT
-    _GAIT_FOOT_X_OFFSET = [FOOT_OFFSET-ASYM_SHIFT, FOOT_OFFSET+ASYM_SHIFT, FOOT_OFFSET-ASYM_SHIFT, FOOT_OFFSET+ASYM_SHIFT]
+    # ASYM_SHIFT = 10
+    _ASYM_XSHIFT = 10
+    _FOOT_XOFFSET = _GAIT_HALF_STRIDE + _SYM_XSHIFT
+    # FOOT_OFFSET = 0    
+    _GAIT_FOOT_X_OFFSET = [_FOOT_XOFFSET-_ASYM_XSHIFT, _FOOT_XOFFSET+_ASYM_XSHIFT, _FOOT_XOFFSET-_ASYM_XSHIFT, _FOOT_XOFFSET+_ASYM_XSHIFT]
     _GAIT_FOOT_0_OFFSET = v3(_GAIT_FOOT_X_OFFSET[0], 0.0, 0.0)
     _GAIT_FOOT_1_OFFSET = v3(_GAIT_FOOT_X_OFFSET[1], 0.0, 0.0)
     _GAIT_FOOT_2_OFFSET = v3(_GAIT_FOOT_X_OFFSET[2], 0.0, 0.0)

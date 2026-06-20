@@ -14,6 +14,7 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import math
+import sys
 import asyncio
 from robug_utils import v3
 from robug_constants import constants as c
@@ -32,7 +33,7 @@ class rbmocon:
         self.bRunLoop = False
         self.bAcceptNewCmd = True
         self.iPhase = 1
-        self.State = ''
+        self.pos_ls = []
         
     async def timeSlice(self, fLoopTime):
         await asyncio.sleep_ms(fLoopTime)        
@@ -118,31 +119,7 @@ class rbmocon:
             lRelPos = [vTmp, vTmp, vTmp, vTmp]            
             await r.set_positions_relative(lRelPos, 25)
         self.bAcceptNewCmd = True
-        com.command_complete()
-        
-    def start_step(self, strSubCmd):
-        r = self.r
-        com = self.com
-        self.set_direction(strSubCmd)
-
-        if self.iPhase == 1:
-            r.push_disable()                    
-            self.bRunLoop = True
-            r.lLeg[0].gait.set_az(0)
-            r.lLeg[3].gait.set_az(0)                    
-            self.iPhase = 2
-            
-        elif self.iPhase == 2:
-            if r.is_support_end(1):
-                r.lLeg[0].gait.calc_parameters_fullstep()
-                r.lLeg[1].gait.calc_parameters_fullstep()
-                r.lLeg[2].gait.calc_parameters_fullstep()
-                r.lLeg[3].gait.calc_parameters_fullstep()
-                self.iPhase = 1
-                r.push_enable() 
-                self.bRunLoop = False
-                self.bAcceptNewCmd = True
-                com.command_complete()                
+        com.command_complete()               
                 
     def resume(self, strSubCmd):
         r = self.r
@@ -160,33 +137,128 @@ class rbmocon:
             self.bRunLoop = False
             self.bAcceptNewCmd = True
             com.command_complete()         
-         
-    def stop_step(self, strSubCmd):
+                
+    async def start_animation(self, strSubCmd):
         r = self.r
         com = self.com
-        self.set_direction(strSubCmd)        
+        self.bRunLoop = False
+        self.set_direction(strSubCmd)
+        r.push_disable()
+
+        # capture current positions in leg space
+        pos_ls_current = [r.lLeg[i].get_foot_pos() for i in range(4)]
+        # reset counter to start position 
+        r.reset_loop_counter()
+        # calculate goal position in leg space
+        r.calculate_foot_positions(bAbs=True)
+        pos_ls_goal = [r.lLeg[i].get_foot_pos() for i in range(4)]
+        # leg0 is reference leg, needs c._GAIT_SWING_TICKS/2
+        # from support path midpoint to support path start
+        di = c._GAIT_SWING_TICKS/2
+        # calculate dx[]
+        dx = [(pos_ls_goal[i].x - pos_ls_current[i].x)/di for i in range(4)]
+        x = [0, 0, 0, 0]
+                
+        # angle steps for halfsine trajectory
+        da  = c._PI / di
+        a   = 0        
+        daz = 0
         
-        if self.iPhase == 1:
-            if r.is_support_end(0):
-                center = c._GAIT_SUPPORT_TICKS/2
-                xreach = r.lLeg[0].gait.get_xreach()
-                dist  = center - r.lLeg[1].gait.get_loop_counter()
-                dxrtn = center/dist
-                r.lLeg[0].gait.set_dxrtn(xreach, dist)
-                r.lLeg[0].gait.set_daz(dist)                        
-                r.lLeg[3].gait.set_dxrtn(xreach, dist)                            
-                r.lLeg[3].gait.set_daz(dist)
-                # disable support leg z-push for clean stop position 
-                r.push_disable()
-                self.iPhase = 2
+        # animation        
+        for _ in range(di):
+            
+            # start timer task
+            timer_task = asyncio.create_task(self.timeSlice(self.fLoopTime))
+            
+            # z contribution of arc (halfsine)
+            a += da
+            daz = c._GAIT_SWING_AMPL * math.sin(a)
+            
+            for i in range(4):
+                # increment x/z pos. for all legs                
+                x[i] += dx[i]
+                # foot_pos is the physical pos in leg space
+                r.lLeg[i].foot_pos.x = pos_ls_current[i].x + x[i]
                 
-        elif self.iPhase == 2:
-            if r.is_support_mid(1):
-                self.iPhase = 1
-                self.bRunLoop = False  
-                self.bAcceptNewCmd = True
-                com.command_complete()
+            # superimpose arc trajectory on leg 0 and 3
+            r.lLeg[0].foot_pos.z = pos_ls_current[0].z + daz
+            r.lLeg[3].foot_pos.z = pos_ls_current[3].z + daz
+            # solve ik for all legs
+            r.solve_ik()
+            # update joints of all legs                
+            r.set_joints()
+            # wait for timer completion
+            await timer_task
+            
+        # clean up
+        r.push_enable()        
+        self.bAcceptNewCmd = True
+        com.command_complete()
                 
+    async def stop_animation(self, strSubCmd):
+        r = self.r
+        com = self.com
+        self.bRunLoop = False 
+        
+        # loop counter value of support path midpoint
+        i_support_mid = r.lLeg[1].gait.get_support_mid()
+        
+        # all for legs have to reach the midpoint in di steps
+        di = i_support_mid - r.lLeg[1].gait.get_loop_counter()        
+        
+        # get current foot positions in leg space
+        pos_ls = [r.lLeg[i].get_foot_pos() for i in range(4)]
+        
+        # calculate dx per tick, move towards center (x=0 in gait space)
+        # target x = c._FOOT_XOFFSET in leg space
+        dx = [((pos_ls[i].x - c._FOOT_XOFFSET) / di) * -1 for i in range(4)]
+        x = [0, 0, 0, 0]        
+        
+        # calculate dz per tick so that after di ticks
+        # all z-values are c._GAIT_HEIGHT
+        dz = [(c._GAIT_HEIGHT-pos_ls[i].z) / di for i in range(4)]
+        z = [0, 0, 0, 0]
+        
+        # angle steps for halfsine trajectory
+        da  = c._PI / di
+        a   = 0        
+        daz = 0
+
+        # animation        
+        for _ in range(di):
+            
+            # start timer task
+            timer_task = asyncio.create_task(self.timeSlice(self.fLoopTime))
+            
+            # z contribution of arc (halfsine)
+            a += da
+            daz = c._GAIT_SWING_AMPL * math.sin(a)
+            
+            for i in range(4):
+                # increment x/z pos. for all legs                
+                x[i] += dx[i]
+                z[i] += dz[i]
+                # foot_pos is the physical pos in leg space
+                r.lLeg[i].foot_pos.x = pos_ls[i].x + x[i]
+                r.lLeg[i].foot_pos.z = pos_ls[i].z + z[i]
+                
+            # superimpose arc trajectory on leg 0 and 3
+            r.lLeg[0].foot_pos.z += daz
+            r.lLeg[3].foot_pos.z += daz
+            # solve ik for all legs
+            r.solve_ik()
+            # update joints of all legs                
+            r.set_joints()
+            # wait for timer completion
+            await timer_task
+
+        for i in range(4):
+            print(r.lLeg[i].foot_pos)
+        
+        # clean up
+        self.bAcceptNewCmd = True
+        com.command_complete()
+   
     async def sit_down(self):
         r = self.r
         com = self.com
@@ -337,24 +409,34 @@ class rbmocon:
                 strCmd, strSubCmd = com.get_command()
                 self.bAcceptNewCmd = False
                 
+            # EOSP = end of support path
+            bEOSP = r.is_support_end(0)
+            # SOSP = start of support path
+            bSOSP = r.is_support_start(0)            
+                
             # process current cmd/subcmd
             if   strCmd == '_cmd_NOP_':        self.bAcceptNewCmd = True
             
-            elif strCmd == '_cmd_START_STEP_': self.start_step(strSubCmd)
+            # elif strCmd == '_cmd_START_STEP_': self.start_step(strSubCmd)
+            elif strCmd == '_cmd_START_STEP_': await self.start_animation(strSubCmd)            
                   
             elif strCmd == '_cmd_RESUME_':     self.resume(strSubCmd)
             
             elif strCmd == '_cmd_PAUSE_':      self.pause()            
             
-            elif strCmd == '_cmd_STOP_STEP_':  self.stop_step(strSubCmd)
-                        
+            # elif strCmd == '_cmd_STOP_STEP_':  self.stop_step(strSubCmd)
+            elif strCmd == '_cmd_STOP_STEP_':
+                if bEOSP:
+                    await timer_task
+                    await self.stop_animation(strSubCmd)
+            
             elif strCmd == '_cmd_TURN_LFT_':   await self.turn_l()
             
             elif strCmd == '_cmd_TURN_RGT_':   await self.turn_r()
             
-            elif strCmd == '_cmd_SIT_DOWN_':  await self.sit_down()
+            elif strCmd == '_cmd_SIT_DOWN_':   await self.sit_down()
             
-            elif strCmd == '_cmd_STAND_UP_':  await self.stand_up()
+            elif strCmd == '_cmd_STAND_UP_':   await self.stand_up()
             
             elif strCmd == '_cmd_PURR_':       await self.purr()
             
