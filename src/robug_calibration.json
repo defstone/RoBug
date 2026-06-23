@@ -1,1 +1,2 @@
-{"robug_calibration_data": {"servo_gain": [0.95, 1.0, 0.9, 1.03, 0.97, 0.93, 0.93, 0.97], "servo_offs": [-5, 0, -5, 25, 0, 40, 40, -35]}}
+{"robug_calibration_data": {"servo_gain": [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0], "servo_offs": [ 0, 0, 0, 0, 0, 0, 0, 0]}}
+
