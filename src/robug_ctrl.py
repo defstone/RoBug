@@ -74,6 +74,15 @@ class rbctrl:
                 await self.send_cmd('TURN_LFT')
             else:
                 await self.send_cmd('TURN_RGT')
+                
+    async def walk_lft(self):
+        await self.send_cmd('WALK_LFT')
+        
+    async def walk_rgt(self):
+        await self.send_cmd('WALK_RGT')
+        
+    async def walk_strgt(self):
+        await self.send_cmd('WALK_STRGT')        
         
     async def sit_down(self):
         await self.send_cmd('SIT_DOWN')

@@ -260,3 +260,14 @@ class robug:
 
     def set_xyz(self, Id, xyz):
         self.lLeg[Id].gait.set_xyz(xyz)
+        
+    def set_gait_gains(self, dir):
+        if   dir == 'left':     gain = c._GAIT_FWD_GAIN_LFT
+        elif dir == 'right':    gain = c._GAIT_FWD_GAIN_RGT
+        elif dir == 'straight': gain = c._GAIT_FWD_GAIN
+        else: gain = [0, 0, 0, 0]
+        for i in range(4):
+            self.lLeg[i].gait.set_gain(gain[i])
+            
+    def get_gait_gains(self):
+        return([self.lLeg[i].gait.get_gain() for i in range(4)])

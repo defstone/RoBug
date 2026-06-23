@@ -125,10 +125,10 @@ class rbmocon:
         r = self.r
         com = self.com
         self.set_direction(strSubCmd)
-        
         self.bRunLoop = True
-        com.command_complete()
         self.bAcceptNewCmd = True
+        com.command_complete()
+        
         
     def pause(self):
         r = self.r
@@ -409,28 +409,39 @@ class rbmocon:
                 strCmd, strSubCmd = com.get_command()
                 self.bAcceptNewCmd = False
                 
-            # EOSP = end of support path
-            bEOSP = r.is_support_end(0)
-            # SOSP = start of support path
-            bSOSP = r.is_support_start(0)            
-                
             # process current cmd/subcmd
             if   strCmd == '_cmd_NOP_':        self.bAcceptNewCmd = True
             
-            # elif strCmd == '_cmd_START_STEP_': self.start_step(strSubCmd)
             elif strCmd == '_cmd_START_STEP_': await self.start_animation(strSubCmd)            
                   
             elif strCmd == '_cmd_RESUME_':     self.resume(strSubCmd)
             
             elif strCmd == '_cmd_PAUSE_':      self.pause()            
             
-            # elif strCmd == '_cmd_STOP_STEP_':  self.stop_step(strSubCmd)
             elif strCmd == '_cmd_STOP_STEP_':
-                if bEOSP:
+                if r.is_support_end(0):
                     await timer_task
                     await self.stop_animation(strSubCmd)
+                    
+            elif strCmd == '_cmd_WALK_LFT_':
+                if r.is_stable():
+                    r.set_gait_gains('left')
+                    self.bAcceptNewCmd = True
+                    com.command_complete()                    
+
+            elif strCmd == '_cmd_WALK_RGT_':
+                if r.is_stable():
+                    r.set_gait_gains('right')
+                    self.bAcceptNewCmd = True
+                    com.command_complete()                    
             
-            elif strCmd == '_cmd_TURN_LFT_':   await self.turn_l()
+            elif strCmd == '_cmd_WALK_STRGT_':
+                if r.is_stable():
+                    r.set_gait_gains('straight')
+                    self.bAcceptNewCmd = True
+                    com.command_complete()                    
+            
+            elif strCmd == '_cmd_TURN_LFT_':   await self.turn_l()      
             
             elif strCmd == '_cmd_TURN_RGT_':   await self.turn_r()
             

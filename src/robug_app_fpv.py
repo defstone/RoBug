@@ -69,7 +69,7 @@ async def serve_sensor_data():
         soc = await get_soc()
         ble.dist = distance
         ble.soc = soc
-        print(distance, soc)
+        # print(distance, soc)
         await asyncio.sleep_ms(250)
              
 # --------------------------------------------------------
@@ -77,12 +77,10 @@ async def serve_sensor_data():
 # --------------------------------------------------------
 async def fpv_rc(b):
     global RoBugState, distance
-
     RoBugState = 'init'
-    CurrentState = 'init'
     
     while True:
-        cmd = b.get_current_cmd()
+        # cmd = b.get_current_cmd()
         
         # -------------------------------------------------
         if   RoBugState == 'init':
@@ -100,19 +98,19 @@ async def fpv_rc(b):
         # -------------------------------------------------
         elif RoBugState == 'idle':
         # -------------------------------------------------        
-            if cmd == 'STOP':
+            if not(b.btn_fwd or b.btn_bwd or b.btn_lft or b.btn_rgt):
                 RoBugState = 'idle'
-            elif cmd == 'FWD':
+            elif b.btn_fwd:
                 await rc.start_to_walk_fwd()
                 RoBugState = 'forward'
-            elif cmd == 'BWD':
+            elif b.btn_bwd:
                 await rc.start_to_walk_bwd()
                 RoBugState = 'backward'
-            elif cmd == 'LEFT':
+            elif b.btn_lft:
                 RoBugState = 'turn_left'
-            elif cmd == 'RIGHT':
+            elif b.btn_rgt:
                 RoBugState = 'turn_right'
-            elif cmd == 'SIT_DOWN':
+            elif False:
                 await rc.sit_down()
                 RoBugState = 'sitting'
             else:
@@ -122,17 +120,27 @@ async def fpv_rc(b):
         # -------------------------------------------------                   
         elif RoBugState == 'forward':
         # -------------------------------------------------         
-            if cmd == 'STOP':
+            if b.btn_fwd:
+                if b.btn_lft and not b.btn_rgt:
+                    await rc.walk_lft()
+                    RoBugState = 'forward'
+                    
+                elif b.btn_rgt and not b.btn_lft:
+                    await rc.walk_rgt()
+                    RoBugState = 'forward'
+                else:
+                    await rc.walk_strgt()                                
+                    RoBugState = 'forward' 
+            else:
+                await rc.walk_strgt()
                 await rc.stop_fwd()
                 await asyncio.sleep(0.1)
                 RoBugState = 'idle'
-            else:
-                RoBugState = 'forward'
                 
         # -------------------------------------------------                   
         elif RoBugState == 'backward':
         # -------------------------------------------------         
-            if cmd == 'STOP':
+            if not b.btn_bwd:
                 await rc.stop_bwd()
                 await asyncio.sleep(0.1)
                 RoBugState = 'idle'
@@ -142,39 +150,26 @@ async def fpv_rc(b):
         # -------------------------------------------------                   
         elif RoBugState == 'turn_left':
         # -------------------------------------------------         
-            if cmd != 'STOP':
+            while b.btn_lft:
                 await rc.turn(-1, 1)
                 await asyncio.sleep(0.05)
-            else:
-                RoBugState = 'idle'
+            RoBugState = 'idle'
                 
         # -------------------------------------------------                   
         elif RoBugState == 'turn_right':
         # -------------------------------------------------         
-            if cmd != 'STOP':
+            while b.btn_rgt:
                 await rc.turn( 1, 1)
                 await asyncio.sleep(0.05)
-            else:
-                RoBugState = 'idle'                  
+            RoBugState = 'idle'                  
 
-        # -------------------------------------------------                   
-        elif RoBugState == 'sitting':
-        # -------------------------------------------------         
-            if cmd == 'STAND_UP':
-                await rc.stand_up()
-                RoBugState = 'idle'                
-            else:
-                RoBugState = 'sitting'
-                
         # -------------------------------------------------                   
         else:
         # -------------------------------------------------                         
             print('unknown state: ', RoBugState)
-            await rc.stop_fwd()
-            await asyncio.sleep(0.1)
             RoBugState = 'idle'
             
-        await asyncio.sleep_ms(100)
+        await asyncio.sleep_ms(200)
 
 # --------------------------------------------------------
 # main
@@ -245,3 +240,4 @@ if __name__ == "__main__":
     r.set_brightness_red(50)
     r.set_brightness_grn(50)
     # r.deinit() 
+ 
