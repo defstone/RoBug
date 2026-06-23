@@ -245,6 +245,12 @@ class rbgait:
     #-- getters and setters  --------
     #--------------------------------
         
+    def get_gain(self):
+        return self.gain
+    
+    def set_gain(self, gain):
+        self.gain = gain
+    
     def get_xreach(self):
         return self.xreach
     

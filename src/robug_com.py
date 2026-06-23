@@ -115,7 +115,19 @@ class rbcom:
             
         elif strMsg == 'SHIFT_COM_BWD':
             strCmd = '_cmd_SHIFT_COM_'
-            strSubCmd = '_cmd_BWD_'             
+            strSubCmd = '_cmd_BWD_'
+            
+        elif strMsg == 'WALK_LFT':
+            strCmd = '_cmd_WALK_LFT_'
+            strSubCmd = '_cmd_NA_'
+            
+        elif strMsg == 'WALK_RGT':
+            strCmd = '_cmd_WALK_RGT_'
+            strSubCmd = '_cmd_NA_'
+            
+        elif strMsg == 'WALK_STRGT':
+            strCmd = '_cmd_WALK_STRGT_'
+            strSubCmd = '_cmd_NA_'              
             
         # special case handling
         elif strMsg == '_NOP_':

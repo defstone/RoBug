@@ -39,24 +39,55 @@ class rbble:
         #register service with one characteristic: write
         aioble.register_services(self.service)
         
+        self.event = False
+        self.btn_fwd = False
+        self.btn_bwd = False
+        self.btn_lft = False
+        self.btn_rgt = False
+        
         self.cmd = 'STOP'
         self.dist = 9999
         self.soc  = 9999        
         self.mode = 'rc'
         self.code = 0xFF
-
+        
+    def handle_buttons(self,msg):
+        if msg == 0x90:
+            self.btn_fwd = True
+        elif msg == 0x91:
+            self.btn_fwd = False
+        elif msg == 0x92:
+            self.btn_bwd = True
+        elif msg == 0x93:
+            self.btn_bwd = False
+        elif msg == 0xA0:
+            self.btn_lft = True
+        elif msg == 0xA1:
+            self.btn_lft = False
+        elif msg == 0xA2:
+            self.btn_rgt = True
+        elif msg == 0xA3:
+            self.btn_rgt = False
+        else:
+            self.btn_fwd = False
+            self.btn_bwd = False
+            self.btn_lft = False
+            self.btn_rgt = False
+        
     # command handling
     def handle_command_rc(self, msg):
-        if msg == 0x91:
+        if msg == 0x90:
             self.cmd = 'FWD'
-        elif msg == 0x92:
+        elif msg == 0x91:
             self.cmd = 'BWD'
-        elif msg == 0x93:
+        elif msg == 0x91:
+            self.cmd = 'STOP_FWD_BWD'            
+        elif msg == 0xA0:
             self.cmd = 'LEFT'
-        elif msg == 0x94:
+        elif msg == 0xA1:
             self.cmd = 'RIGHT'
-        elif msg == 0x90:
-            self.cmd = 'STOP'
+        elif msg == 0xA2:
+            self.cmd = 'STOP_LEFT_RIGHT'
         else:
             print('UNKNOWN:', msg)
             self.cmd = 'STOP'
@@ -94,7 +125,8 @@ class rbble:
             if data:
                 cmd = data[0]
                 if self.mode == 'rc':
-                    self.handle_command_rc(cmd)
+                    # self.handle_command_rc(cmd)
+                    self.handle_buttons(cmd)                    
                 elif self.mode == 'raw':
                     self.handle_command_raw(cmd)
                                
@@ -120,6 +152,10 @@ if __name__ == '__main__':
     
     async def main(b):
         msg_server = asyncio.create_task(b.msg_handler())
+        
+        while True:
+            print(b.btn_fwd, b.btn_bwd, b.btn_lft, b.btn_rgt)
+            await asyncio.sleep(1)
         await msg_server 
 
     ble = rbble()

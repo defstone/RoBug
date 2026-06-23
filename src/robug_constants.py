@@ -183,8 +183,18 @@ class constants:
     # _GAIT_FWD_GAIN = [3.0, 1.0, 1.0, 0.4]
     # _GAIT_FWD_GAIN = [2.0, 1.0, 1.0, 0.4]
     # _GAIT_FWD_GAIN = [2.5, 1.0, 1.0, 0.25]
-    _GAIT_FWD_GAIN = [1.0, 1.0, 1.0, 1.0]
     
+    # dude, this is interesting !
+    # speed up support legs while while other two legs swing back
+    # together with push the impulse is up and fwd -like running!
+    # more translation without increasing swing back length!!!!
+    # can be used to increase speed gradually!!!
+    # _GAIT_FWD_GAIN     = [2.0, 2.0, 2.0, 2.0]
+    _GAIT_FWD_GAIN     = [1.0, 1.0, 1.0, 1.0]
+    
+    # this are the gains for walking left / right
+    _GAIT_FWD_GAIN_LFT = [1.0, 0.5, 2.5, 1.0]
+    _GAIT_FWD_GAIN_RGT = [2.5, 1.0, 1.0, 0.5] 
     
     # y-delta for every phase of turning at the spot
     _GAIT_TURN_Y = 7
