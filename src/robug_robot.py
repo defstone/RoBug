@@ -251,6 +251,18 @@ class robug:
             # dir * c._LEG_DIR[i] accouts for leg mounting orientation
             self.lLeg[i].gait.set_direction(dir * c._LEG_DIR[i], strAxis)
             
+    def set_body_lean(self, dir, asym):
+        lXoffset = [c._FOOT_XOFFSET - asym * dir,
+                    c._FOOT_XOFFSET + asym * dir,
+                    c._FOOT_XOFFSET - asym * dir,
+                    c._FOOT_XOFFSET + asym * dir]
+        lOverlay = [v3(lXoffset[0], 0.0, 0.0),
+                    v3(lXoffset[1], 0.0, 0.0),
+                    v3(lXoffset[2], 0.0, 0.0),
+                    v3(lXoffset[3], 0.0, 0.0)]
+        for i in range(4):
+            self.lLeg[i].overlay_pose.set(lOverlay[i])
+      
     def get_direction(self, strAxis):
         if   strAxis == 'x': return self.dirX
         elif strAxis == 'z': return self.dirZ 

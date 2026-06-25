@@ -106,6 +106,14 @@ class rbmocon:
             r.set_direction(-1, 'x')
         else: com.subcommand_unknown()
         
+    def set_body_lean(self, strSubCmd):
+        r = self.r
+        if   strSubCmd == '_cmd_FWD_':
+            r.set_body_lean( 1, c._ASYM_XSHIFT)
+        elif strSubCmd == '_cmd_BWD_':
+            r.set_body_lean(-1, c._ASYM_XSHIFT)
+        else: com.subcommand_unknown()        
+        
     async def shift_CoM(self, strSubCmd):
         print('shifting CoM')
         r = self.r
@@ -129,7 +137,6 @@ class rbmocon:
         self.bAcceptNewCmd = True
         com.command_complete()
         
-        
     def pause(self):
         r = self.r
         com = self.com
@@ -143,6 +150,7 @@ class rbmocon:
         com = self.com
         self.bRunLoop = False
         self.set_direction(strSubCmd)
+        self.set_body_lean(strSubCmd)
         r.push_disable()
 
         # capture current positions in leg space
