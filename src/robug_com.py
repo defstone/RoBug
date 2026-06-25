@@ -127,7 +127,11 @@ class rbcom:
             
         elif strMsg == 'WALK_STRGT':
             strCmd = '_cmd_WALK_STRGT_'
-            strSubCmd = '_cmd_NA_'              
+            strSubCmd = '_cmd_NA_'
+            
+        elif strMsg == 'KICK':
+            strCmd = '_cmd_KICK_'
+            strSubCmd = '_cmd_NA_'
             
         # special case handling
         elif strMsg == '_NOP_':

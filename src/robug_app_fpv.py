@@ -98,7 +98,7 @@ async def fpv_rc(b):
         # -------------------------------------------------
         elif RoBugState == 'idle':
         # -------------------------------------------------        
-            if not(b.btn_fwd or b.btn_bwd or b.btn_lft or b.btn_rgt):
+            if not(b.btn_fwd or b.btn_bwd or b.btn_lft or b.btn_rgt or b.btn_fn0):
                 RoBugState = 'idle'
             elif b.btn_fwd:
                 await rc.start_to_walk_fwd()
@@ -110,9 +110,8 @@ async def fpv_rc(b):
                 RoBugState = 'turn_left'
             elif b.btn_rgt:
                 RoBugState = 'turn_right'
-            elif False:
-                await rc.sit_down()
-                RoBugState = 'sitting'
+            elif b.btn_fn0:
+                await rc.kick()
             else:
                 print('unknown command during idle: ', cmd)
                 RoBugState = 'idle'                

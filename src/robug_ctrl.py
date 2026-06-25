@@ -90,3 +90,7 @@ class rbctrl:
     async def stand_up(self):
         await self.send_cmd('STAND_UP')
         
+    async def kick(self):
+        await self.send_cmd('KICK')
+        
+        

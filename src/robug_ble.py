@@ -44,6 +44,7 @@ class rbble:
         self.btn_bwd = False
         self.btn_lft = False
         self.btn_rgt = False
+        self.btn_fn0 = False        
         
         self.cmd = 'STOP'
         self.dist = 9999
@@ -68,30 +69,16 @@ class rbble:
             self.btn_rgt = True
         elif msg == 0xA3:
             self.btn_rgt = False
+        elif msg == 0xA4:
+            self.btn_fn0 = True
+        elif msg == 0xA5:
+            self.btn_fn0 = False            
         else:
             self.btn_fwd = False
             self.btn_bwd = False
             self.btn_lft = False
             self.btn_rgt = False
-        
-    # command handling
-    def handle_command_rc(self, msg):
-        if msg == 0x90:
-            self.cmd = 'FWD'
-        elif msg == 0x91:
-            self.cmd = 'BWD'
-        elif msg == 0x91:
-            self.cmd = 'STOP_FWD_BWD'            
-        elif msg == 0xA0:
-            self.cmd = 'LEFT'
-        elif msg == 0xA1:
-            self.cmd = 'RIGHT'
-        elif msg == 0xA2:
-            self.cmd = 'STOP_LEFT_RIGHT'
-        else:
-            print('UNKNOWN:', msg)
-            self.cmd = 'STOP'
-        print(self.cmd)
+            self.btn_fn0 = False
         
     def handle_command_raw(self, msg):
         self.code = msg
@@ -124,8 +111,8 @@ class rbble:
             data = self.char_cmd.read()
             if data:
                 cmd = data[0]
+                print(cmd)
                 if self.mode == 'rc':
-                    # self.handle_command_rc(cmd)
                     self.handle_buttons(cmd)                    
                 elif self.mode == 'raw':
                     self.handle_command_raw(cmd)
