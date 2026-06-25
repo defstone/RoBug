@@ -80,7 +80,7 @@ class rbble:
             self.cmd = 'FWD'
         elif msg == 0x91:
             self.cmd = 'BWD'
-        elif msg == 0x91:
+        elif msg == 0x92:
             self.cmd = 'STOP_FWD_BWD'            
         elif msg == 0xA0:
             self.cmd = 'LEFT'
