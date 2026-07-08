@@ -18,6 +18,7 @@ from time import sleep
 import math
 import asyncio
 from collections import deque
+import json
 from machine import Pin, PWM, I2C, ADC
 
 from robug_constants import constants as c
@@ -25,6 +26,7 @@ from robug_robot import robug
 from robug_ctrl import rbctrl
 from robug_mocon import rbmocon
 from robug_ble import rbble
+from robug_app_calibrator import calibration
 
 # --------------------------------------------------------
 # sensors etc.
@@ -69,7 +71,6 @@ async def serve_sensor_data():
         soc = await get_soc()
         ble.dist = distance
         ble.soc = soc
-        # print(distance, soc)
         await asyncio.sleep_ms(250)
              
 # --------------------------------------------------------
@@ -80,7 +81,14 @@ async def fpv_rc(b):
     RoBugState = 'init'
     
     while True:
-        # cmd = b.get_current_cmd()
+        
+        # get controller button states once(!) per loop
+        btn_fwd = b.btn_fwd
+        btn_bwd = b.btn_bwd
+        btn_lft = b.btn_lft
+        btn_rgt = b.btn_rgt
+        btn_kck = b.btn_fn0
+        btns_idle = not(btn_fwd or btn_bwd or btn_lft or btn_rgt or btn_kck)
         
         # -------------------------------------------------
         if   RoBugState == 'init':
@@ -98,21 +106,20 @@ async def fpv_rc(b):
         # -------------------------------------------------
         elif RoBugState == 'idle':
         # -------------------------------------------------        
-            if not(b.btn_fwd or b.btn_bwd or b.btn_lft or b.btn_rgt):
+            if btns_idle:
                 RoBugState = 'idle'
-            elif b.btn_fwd:
+            elif btn_fwd:
                 await rc.start_to_walk_fwd()
                 RoBugState = 'forward'
-            elif b.btn_bwd:
+            elif btn_bwd:
                 await rc.start_to_walk_bwd()
                 RoBugState = 'backward'
-            elif b.btn_lft:
+            elif btn_lft:
                 RoBugState = 'turn_left'
-            elif b.btn_rgt:
+            elif btn_rgt:
                 RoBugState = 'turn_right'
-            elif False:
-                await rc.sit_down()
-                RoBugState = 'sitting'
+            elif btn_kck:
+                await rc.kick()
             else:
                 print('unknown command during idle: ', cmd)
                 RoBugState = 'idle'                
@@ -120,48 +127,50 @@ async def fpv_rc(b):
         # -------------------------------------------------                   
         elif RoBugState == 'forward':
         # -------------------------------------------------         
-            if b.btn_fwd:
-                if b.btn_lft and not b.btn_rgt:
+            if btn_fwd:
+                RoBugState = 'forward'
+                if btn_lft:
                     await rc.walk_lft()
-                    RoBugState = 'forward'
-                    
-                elif b.btn_rgt and not b.btn_lft:
+                elif btn_rgt:
                     await rc.walk_rgt()
-                    RoBugState = 'forward'
                 else:
                     await rc.walk_strgt()                                
-                    RoBugState = 'forward' 
             else:
                 await rc.walk_strgt()
                 await rc.stop_fwd()
-                await asyncio.sleep(0.1)
                 RoBugState = 'idle'
                 
         # -------------------------------------------------                   
         elif RoBugState == 'backward':
         # -------------------------------------------------         
-            if not b.btn_bwd:
-                await rc.stop_bwd()
-                await asyncio.sleep(0.1)
-                RoBugState = 'idle'
-            else:
+            if btn_bwd:
                 RoBugState = 'backward'
-                
+                if btn_lft:
+                    await rc.walk_lft()
+                elif btn_rgt:
+                    await rc.walk_rgt()
+                else:
+                    await rc.walk_strgt()                
+            else:
+                await rc.walk_strgt()                
+                await rc.stop_bwd()
+                RoBugState = 'idle'                
+
         # -------------------------------------------------                   
         elif RoBugState == 'turn_left':
         # -------------------------------------------------         
-            while b.btn_lft:
-                await rc.turn(-1, 1)
-                await asyncio.sleep(0.05)
-            RoBugState = 'idle'
+            if btn_lft:
+                await rc.turn(-1)
+            else:
+                RoBugState = 'idle'
                 
         # -------------------------------------------------                   
         elif RoBugState == 'turn_right':
         # -------------------------------------------------         
-            while b.btn_rgt:
-                await rc.turn( 1, 1)
-                await asyncio.sleep(0.05)
-            RoBugState = 'idle'                  
+            if btn_rgt:
+                await rc.turn( 1)
+            else:
+                RoBugState = 'idle'                  
 
         # -------------------------------------------------                   
         else:
@@ -169,37 +178,40 @@ async def fpv_rc(b):
             print('unknown state: ', RoBugState)
             RoBugState = 'idle'
             
-        await asyncio.sleep_ms(200)
+        await asyncio.sleep(0.05)
+        
+async def main_cal():
+    # start tasks
+    task0 = asyncio.create_task(ble.msg_handler())
+    task1 = asyncio.create_task(calibration(r, ble))
+    # wait for termination        
+    await task1
+    task0.cancel()    
 
+async def main_rc():
+    #start ble task
+    task_ble  = asyncio.create_task(ble.msg_handler())
+    # start sensor tasks
+    task_dist = asyncio.create_task(serve_sensor_data())
+    # start any tasks that need to run concurrently
+    task_led = asyncio.create_task(pulse_leds())
+    # start the motion controller
+    task_mc = asyncio.create_task(m.run())
+    # start application
+    task_rc = asyncio.create_task(fpv_rc(ble))
+    # wait for termination
+    await task_rc
+    task_ble.cancel()    
+    task_dist.cancel()
+    task_led.cancel()
+    task_mc.cancel()          
+        
 # --------------------------------------------------------
 # main
 # --------------------------------------------------------                    
 if __name__ == "__main__":
     
-    async def main():
-        
-        #start ble task
-        task_ble  = asyncio.create_task(ble.msg_handler())
-        
-        # start sensor tasks
-        task_dist = asyncio.create_task(serve_sensor_data())
-        
-        # start any tasks that need to run concurrently
-        # no LEDs yet
-        task_led = asyncio.create_task(pulse_leds())
-        
-        # start the motion controller
-        task_mc = asyncio.create_task(m.run())
 
-        # start the supervisor (example above). This could be a task that
-        # handles bluetooth remote control or any task to control RoBug
-        task_rc = asyncio.create_task(fpv_rc(ble))
-        
-        await task_rc
-        task_ble.cancel()    
-        task_dist.cancel()
-        task_led.cancel()
-        task_mc.cancel()        
         
     # ----------------------------
     # initialization
@@ -212,30 +224,41 @@ if __name__ == "__main__":
     
     # setup BLE
     ble = rbble()
-
-    # init RoBug, set start position
+    # generate global robug object
     r = robug()
-    r.reset_loop_counter()
-    r.calculate_foot_positions()
-    r.solve_ik()
-    r.set_joints() 
     sleep(1)
     
-    # set up ADC
-    adc = ADC(c._PIN_ADC)
-    # voltage divider (47k/100k) backwards
-    # and scaling to 3.3V
-    cf = (3.3 / 65536) * (147/47)
-   
-    # set up motion controller
-    MsgQueue  = deque([], 4)
-    RplyQueue = deque([], 4)
-    rc = rbctrl(MsgQueue, RplyQueue)
-    m = rbmocon(r, MsgQueue, RplyQueue)
-    
-    # start tasks
-    asyncio.run(main())
-    
+    # select application:
+    # touch_top = 1 --> calibration
+    # touch_top = 0 --> rc
+    if r.touch_top():
+        ble.set_mode('raw')
+        for i in range(4):
+            for j in range(2):
+                r.lLeg[i].joints.set_angle_sid(j, 0)
+                sleep(0.25)
+        # start tasks
+        asyncio.run(main_cal())        
+    else:
+        # init RoBug and set start position
+        r.reset_loop_counter()
+        r.calculate_foot_positions()
+        r.solve_ik()
+        r.set_joints()
+        sleep(1)
+        # set up ADC
+        adc = ADC(c._PIN_ADC)
+        # voltage divider (47k/100k) backwards
+        # and scaling to 3.3V
+        cf = (3.3 / 65536) * (147/47)
+        # set up motion controller
+        MsgQueue  = deque([], 4)
+        RplyQueue = deque([], 4)
+        rc = rbctrl(MsgQueue, RplyQueue)
+        m = rbmocon(r, MsgQueue, RplyQueue)
+        # start tasks
+        asyncio.run(main_rc())
+        
     # clean up and shut down
     r.set_brightness_red(50)
     r.set_brightness_grn(50)

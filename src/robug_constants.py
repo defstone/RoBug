@@ -122,7 +122,7 @@ class constants:
     # loop update rate in ms
     # golden: 11
     # speedy: 8
-    _GAIT_LOOP_TIME = 10
+    _GAIT_LOOP_TIME = 9
     
     # height over ground
     # ref: shoulder joint
@@ -159,7 +159,7 @@ class constants:
     
     # distance from max. x to center of foot trajectory
     # golden: 35
-    _GAIT_HALF_STRIDE = 37 
+    _GAIT_HALF_STRIDE = 34 
     # low gait - quick    
     # _GAIT_HALF_STRIDE = 25
     
@@ -191,15 +191,19 @@ class constants:
     # can be used to increase speed gradually!!!
     # _GAIT_FWD_GAIN     = [2.0, 2.0, 2.0, 2.0]
     _GAIT_FWD_GAIN     = [1.0, 1.0, 1.0, 1.0]
+    _GAIT_BWD_GAIN     = [1.0, 1.0, 1.0, 1.0]    
     
     # this are the gains for walking left / right
-    _GAIT_FWD_GAIN_LFT = [1.0, 0.5, 2.5, 1.0]
-    _GAIT_FWD_GAIN_RGT = [2.5, 1.0, 1.0, 0.5] 
+    _GAIT_FWD_GAIN_LFT = [1.0, 0.4, 2.7, 1.0]
+    _GAIT_BWD_GAIN_LFT = [0.4, 1.0, 1.0, 2.7]    
+    _GAIT_FWD_GAIN_RGT = [2.7, 1.0, 1.0, 0.4]
+    _GAIT_BWD_GAIN_RGT = [1.0, 2.7, 0.4, 1.0]    
     
     # y-delta for every phase of turning at the spot
     _GAIT_TURN_Y = 7
     # x-delta for every phase of turning at the spot
     _GAIT_TURN_X = 30
+    
     
     # offset between diagonal legs for symmetric trott gait
     _GAIT_PHASE_OFFSET = (_GAIT_SUPPORT_TICKS + _GAIT_SWING_TICKS) / 2

@@ -260,8 +260,9 @@ class rbmocon:
             # wait for timer completion
             await timer_task
 
-        for i in range(4):
-            print(r.lLeg[i].foot_pos)
+        # debug output
+        # for i in range(4):
+        #     print(r.lLeg[i].foot_pos)
         
         # clean up
         self.bAcceptNewCmd = True
@@ -315,6 +316,41 @@ class rbmocon:
 
         self.bAcceptNewCmd = True
         com.command_complete()
+        
+    async def kick(self,strSubCmd):
+        r = self.r
+        com = self.com
+        lTmpPos = []
+         
+        # lean back a little bit
+        lRelPos = [v3(  15,  0,  0), v3(  15,  0,  10), v3( 15,  0,  0), v3( 15,  0, 15)]
+        await r.set_positions_relative(lRelPos, 15)
+        
+        #await asyncio.sleep(1)        
+            
+        # lift front left leg
+        lRelPos = [v3( -20,  0,  10), v3(  0,  0,  0), v3(  0,  0,  0), v3(  0,  0,  0)]
+        await r.set_positions_relative(lRelPos, 15)
+        
+        # await asyncio.sleep(0.25)        
+        
+        # kick left
+        lRelPos = [v3(110,  0,  60), v3(  0,  0,  0), v3(  0,  0,  0), v3(  0,  0,  0)]
+        await r.set_positions_relative(lRelPos, 4)
+        
+        await asyncio.sleep(0.050)
+        
+        lRelPos = [v3( -90,  0, -70), v3(   0,  0,   0), v3(   0,  0,  0), v3(   0,  0,   0)]
+        await r.set_positions_relative(lRelPos, 15)
+        
+        # await asyncio.sleep(1)        
+        
+        # go back to neutral stance
+        lRelPos = [v3( -15,  0,   0), v3( -15,  0, -10), v3( -15,  0,  0), v3( -15,  0, -15)]
+        await r.set_positions_relative(lRelPos, 15)        
+
+        self.bAcceptNewCmd = True
+        com.command_complete()        
         
     async def turn_l(self):
         r = self.r
@@ -463,7 +499,9 @@ class rbmocon:
             
             elif strCmd == '_cmd_ROTATE_UP_':  await self.rotate_body(-15)
             
-            elif strCmd == '_cmd_SHIFT_COM_':  await self.shift_CoM(strSubCmd)            
+            elif strCmd == '_cmd_SHIFT_COM_':  await self.shift_CoM(strSubCmd)
+            
+            elif strCmd == '_cmd_KICK_':       await self.kick(strSubCmd)             
 
             elif strCmd == '_cmd_EXIT_':
                 

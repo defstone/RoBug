@@ -47,43 +47,15 @@ async def pulse_leds():
 # --------------------------------------------------------
 # application: init -> walk fwd -> stop
 # --------------------------------------------------------
-def current_pose():
-    lTmp = []
-    for i in range(4):
-        tmp = v3()
-        tmp.set(r.lLeg[i].foot_pos)
-        lTmp.append(tmp)
-    return lTmp
-
-def calc_overlay_pose(lNeutral, lModified):
-    for i in range(4):
-        lModified[i].sub(lNeutral[i])
-        r.lLeg[i].overlay_pose.set(c._GAIT_FOOT_OFFSET[i])
-        r.lLeg[i].overlay_pose.add(lModified[i])
-     
-def reset_overlay_pose():
-    for i in range(4):
-        r.lLeg[i].overlay_pose.set(c._GAIT_FOOT_OFFSET[i])
        
 async def simplest_test():
     
-    await rc.init_pose()
-    # lPose_Neutral = current_pose()
-    
-    await asyncio.sleep(1)
-    
-    # await rc.shift_com_fwd()
-    # lPose_Fwd = current_pose()
-    # calc_overlay_pose(lPose_Neutral, lPose_Fwd)
-    
+    await rc.init_pose()    
+    await asyncio.sleep(1)    
     await rc.start_to_walk_fwd()
-    await asyncio.sleep(5)
-    
+    await asyncio.sleep(5)    
     await rc.stop_fwd()
-    #await rc.shift_com_bwd()
-    #reset_overlay_pose()
     
-
 # --------------------------------------------------------
 # main
 # --------------------------------------------------------                    

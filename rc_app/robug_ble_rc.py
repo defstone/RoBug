@@ -13,6 +13,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+from machine import Pin
 import asyncio
 import bluetooth
 import aioble
@@ -28,15 +29,28 @@ class rbrc:
         self.CHAR_UUID2   = bluetooth.UUID('ba3ca205-e3fb-4727-ad69-878bb3038b01')
         self.CHAR_UUID3   = bluetooth.UUID('ba3ca205-e3fb-4727-ad69-878bb3038b02')
         
-        self.FWD_P = 0x90
-        self.FWD_R = 0X91
-        self.BWD_P = 0x92
-        self.BWD_R = 0X93
-        self.LFT_P = 0xA0
-        self.LFT_R = 0XA1
-        self.RGT_P = 0xA2
-        self.RGT_R = 0XA3        
-
+        # waveshare pico-lcd-1.3 documentaion
+        self.GPIO_FWD = 2
+        self.GPIO_BWD = 18
+        self.GPIO_LFT = 16
+        self.GPIO_RGT = 20
+        self.GPIO_KCK = 21
+        
+        self.switch = [Pin(self.GPIO_FWD, Pin.IN, Pin.PULL_UP),
+                       Pin(self.GPIO_BWD, Pin.IN, Pin.PULL_UP),
+                       Pin(self.GPIO_LFT, Pin.IN, Pin.PULL_UP),
+                       Pin(self.GPIO_RGT, Pin.IN, Pin.PULL_UP),
+                       Pin(self.GPIO_KCK, Pin.IN, Pin.PULL_UP)]
+        
+    def get_controller_state(self):
+        tmp = []
+        chksum = 0
+        for i in range(5):
+            pin_state = int(1 - self.switch[i].value())
+            tmp.append(pin_state)
+            chksum += 2**i * pin_state
+        return tmp, chksum
+        
     async def ble_scan(self):
         async with aioble.scan(duration_ms=5000, interval_us=30000, window_us=30000, active=True) as scanner:
             async for result in scanner:
@@ -65,15 +79,21 @@ class rbrc:
                     # get write characteristic of ble server a.k.a. RoBug
                     char_cmd = await service.characteristic(self.CHAR_UUID1)
                     print(service)
-                    print(char_cmd)                    
-                
+                    print(char_cmd)
+                    
+                    pin_state_new, chksum_new = self.get_controller_state()
+                    pin_state_old = pin_state_new
+                    chksum_old    = chksum_new
+                    
                     while True:
-                        data = struct.pack('<I', 0x90)
-                        await char_cmd.write(data, response=False, timeout_ms=2000)
-                        await asyncio.sleep(2)
-                        data = struct.pack('<I', 0x91)
-                        await char_cmd.write(data, response=False, timeout_ms=2000)
-                        await asyncio.sleep(2)                        
+                        print(self.get_controller_state())
+                        pin_state_new, chksum_new = self.get_controller_state()
+                        if chksum_new != chksum_old:
+                            data = struct.pack('<I', chksum_new)                            
+                            await char_cmd.write(data, response=False, timeout_ms=2000)
+                        pin_state_old = pin_state_new
+                        chksum_old    = chksum_new
+                        await asyncio.sleep(0.15)                        
                     
             except asyncio.TimeoutError:
                 print('connection failed - timeout')
@@ -85,10 +105,5 @@ class rbrc:
             print(f'connection closed - restarting ble scan')
             await asyncio.sleep(1)                
             
-            
 rc = rbrc()
 asyncio.run(rc.ble_connection())
-
-
-
-

@@ -26,7 +26,7 @@ class rbctrl:
         while True:
             if len(self.rxq) > 0:
                 strRply = self.rxq.pop()
-                print(f'client received reply: {strRply}')
+                print(f'client received reply: {strRply}\n')
                 return strRply
             await asyncio.sleep_ms(100)
             
@@ -68,12 +68,11 @@ class rbctrl:
         await self.send_cmd('START_POSE_BWD')            
         await self.send_cmd('RESUME_BWD')    
         
-    async def turn(self, dir, times):
-        for i in range(times):
-            if dir == -1:
-                await self.send_cmd('TURN_LFT')
-            else:
-                await self.send_cmd('TURN_RGT')
+    async def turn(self, dir):
+        if dir == -1:
+            await self.send_cmd('TURN_LFT')
+        else:
+            await self.send_cmd('TURN_RGT')
                 
     async def walk_lft(self):
         await self.send_cmd('WALK_LFT')
@@ -89,4 +88,8 @@ class rbctrl:
         
     async def stand_up(self):
         await self.send_cmd('STAND_UP')
+        
+    async def kick(self):
+        await self.send_cmd('KICK')
+        
         
