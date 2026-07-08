@@ -38,8 +38,8 @@ class robug:
         self.lLegTicks =[[], [], [], []]
         
         # touch sensor setup
-        self.touch_top = Pin(c._PIN_TOUCH_TOP, Pin.IN)
-        self.touch_bot = Pin(c._PIN_TOUCH_BOT, Pin.IN)
+        self.touch_top = Pin(c._PIN_TOUCH_TOP, Pin.IN, Pin.PULL_UP)
+        self.touch_bot = Pin(c._PIN_TOUCH_BOT, Pin.IN, Pin.PULL_UP)
         
         # distance sensor setup
         self.vl53 = vl53l0x(I2C(c._I2C_BUS, sda=Pin(c._PIN_I2C_SDA), scl=Pin(c._PIN_I2C_SCL), freq=c._I2C_RATE))
@@ -66,18 +66,10 @@ class robug:
     #--------------------------------
         
     def touch_top(self):
-        tmp = self.touch_top.value()
-        if tmp == 1:
-            return True
-        else:
-            return False
+        return self.touch_top.value()
     
     def touch_bot(self):
-        tmp = self.touch_bot.value()
-        if tmp == 1:
-            return True
-        else:
-            return False    
+        return self.touch_bot.value()   
         
     def get_distance(self):
         return self.vl53.range
@@ -274,10 +266,17 @@ class robug:
         self.lLeg[Id].gait.set_xyz(xyz)
         
     def set_gait_gains(self, dir):
-        if   dir == 'left':     gain = c._GAIT_FWD_GAIN_LFT
-        elif dir == 'right':    gain = c._GAIT_FWD_GAIN_RGT
-        elif dir == 'straight': gain = c._GAIT_FWD_GAIN
-        else: gain = [0, 0, 0, 0]
+        if self.dirX == 1:
+            if   dir == 'left':     gain = c._GAIT_FWD_GAIN_LFT
+            elif dir == 'right':    gain = c._GAIT_FWD_GAIN_RGT
+            elif dir == 'straight': gain = c._GAIT_FWD_GAIN
+            else: gain = [0, 0, 0, 0]
+        elif self.dirX == -1:
+            if   dir == 'left':     gain = c._GAIT_BWD_GAIN_LFT
+            elif dir == 'right':    gain = c._GAIT_BWD_GAIN_RGT
+            elif dir == 'straight': gain = c._GAIT_BWD_GAIN
+            else: gain = [0, 0, 0, 0]            
+            
         for i in range(4):
             self.lLeg[i].gait.set_gain(gain[i])
             

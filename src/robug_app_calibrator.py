@@ -22,7 +22,13 @@ from robug_constants import constants as c
 from robug_robot import robug
 from robug_ble import rbble
 
-async def calibration():
+async def calibration(robug, bluetoothLE):
+    r = robug
+    ble = bluetoothLE
+    
+    delta = math.pi/2
+    gamma = math.pi/2
+    gain_mode = 0
     
     while True:  
         code = ble.get_current_code()
@@ -40,13 +46,21 @@ async def calibration():
                 joint = index % 2
                 op    = code % 0x10
                 print('code: ', code, 'index: ', index, 'leg: ', leg, 'joint: ', joint, 'inc/dec: ', op)
-                # increment or decrement offset value
-                if op == 1:
+                # increment or decrement offset or gain value
+                # op 0 / op1 -> offset
+                # op 8 / op9 -> gain
+                if op == 0:
                     r.lLeg[leg].joints.lServoCal[joint] += 5
-                elif op == 0:
+                elif op == 1:
                     r.lLeg[leg].joints.lServoCal[joint] -= 5
+                elif op == 8:
+                    r.lLeg[leg].joints.lServoGain[joint] -= 0.02
+                elif op == 9:
+                    r.lLeg[leg].joints.lServoGain[joint] += 0.02                    
                 # update leg
-                r.lLeg[leg].joints.set_angle_sid(joint, 0)
+                deltaTicks = r.lLeg[leg].rad2ticks(delta)
+                gammaTicks = r.lLeg[leg].rad2ticks(gamma)                
+                r.lLeg[leg].joints.set_angles(deltaTicks, gammaTicks)
                 
             elif code == 0x80:
                 lOffs = []
@@ -62,6 +76,31 @@ async def calibration():
                     print(json.dumps(data))
                     json.dump(data, f)
                     
+            elif code == 0x81:
+                gain_mode == 0                 
+                delta = math.pi/2
+                gamma = math.pi/2
+                for i in range(4):
+                    deltaTicks = r.lLeg[i].rad2ticks(delta)
+                    gammaTicks = r.lLeg[i].rad2ticks(gamma)                
+                    r.lLeg[i].joints.set_angles(deltaTicks, gammaTicks)
+                    sleep(0.25)
+                        
+            elif code == 0x82:
+                if gain_mode == 0:  
+                    delta = math.pi/2
+                    gamma = math.pi/2 - math.pi/4
+                    gain_mode = 1                    
+                elif gain_mode == 1: 
+                    delta = math.pi/2 - math.pi/4
+                    gamma = math.pi/2 - math.pi/4
+                    gain_mode = 0
+                for i in range(4):
+                    deltaTicks = r.lLeg[i].rad2ticks(delta)
+                    gammaTicks = r.lLeg[i].rad2ticks(gamma)                
+                    r.lLeg[i].joints.set_angles(deltaTicks, gammaTicks)
+                    sleep(0.25)                    
+                               
         await asyncio.sleep(0.1)
     
 # --------------------------------------------------------
@@ -73,7 +112,7 @@ if __name__ == "__main__":
         
         #start ble task
         task0 = asyncio.create_task(ble.msg_handler())
-        task1 = asyncio.create_task(calibration())
+        task1 = asyncio.create_task(calibration(r, ble))
         
         await task1
         task0.cancel()

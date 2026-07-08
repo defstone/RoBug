@@ -260,8 +260,9 @@ class rbmocon:
             # wait for timer completion
             await timer_task
 
-        for i in range(4):
-            print(r.lLeg[i].foot_pos)
+        # debug output
+        # for i in range(4):
+        #     print(r.lLeg[i].foot_pos)
         
         # clean up
         self.bAcceptNewCmd = True
@@ -328,18 +329,18 @@ class rbmocon:
         #await asyncio.sleep(1)        
             
         # lift front left leg
-        lRelPos = [v3(   0,  0,  10), v3(  0,  0,  0), v3(  0,  0,  0), v3(  0,  0,  0)]
+        lRelPos = [v3( -20,  0,  10), v3(  0,  0,  0), v3(  0,  0,  0), v3(  0,  0,  0)]
         await r.set_positions_relative(lRelPos, 15)
         
         # await asyncio.sleep(0.25)        
         
         # kick left
-        lRelPos = [v3(  80,  0,  40), v3(  0,  0,  0), v3(  0,  0,  0), v3(  0,  0,  0)]
-        await r.set_positions_relative(lRelPos, 7)
+        lRelPos = [v3(110,  0,  60), v3(  0,  0,  0), v3(  0,  0,  0), v3(  0,  0,  0)]
+        await r.set_positions_relative(lRelPos, 4)
         
-        # await asyncio.sleep(0.25)
+        await asyncio.sleep(0.050)
         
-        lRelPos = [v3( -80,  0, -50), v3(   0,  0,   0), v3(   0,  0,  0), v3(   0,  0,   0)]
+        lRelPos = [v3( -90,  0, -70), v3(   0,  0,   0), v3(   0,  0,  0), v3(   0,  0,   0)]
         await r.set_positions_relative(lRelPos, 15)
         
         # await asyncio.sleep(1)        

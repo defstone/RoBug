@@ -71,8 +71,8 @@ class rbcom:
         elif strMsg == 'STOP_POSE_BWD':
             strCmd = '_cmd_STOP_STEP_'
             strSubCmd = '_cmd_BWD_'
-
-        # scripted actions
+            
+        # turning at the spot or when walking
         elif strMsg == 'TURN_LFT':
             strCmd = '_cmd_TURN_LFT_'
             strSubCmd = '_cmd_NA_'
@@ -81,16 +81,25 @@ class rbcom:
             strCmd = '_cmd_TURN_RGT_'
             strSubCmd = '_cmd_NA_'
             
+        elif strMsg == 'WALK_LFT':
+            strCmd = '_cmd_WALK_LFT_'
+            strSubCmd = '_cmd_NA_'
+            
+        elif strMsg == 'WALK_RGT':
+            strCmd = '_cmd_WALK_RGT_'
+            strSubCmd = '_cmd_NA_'
+            
+        elif strMsg == 'WALK_STRGT':
+            strCmd = '_cmd_WALK_STRGT_'
+            strSubCmd = '_cmd_NA_'      
+
+        # scripted actions   
         elif strMsg == 'LIFT_LEGS':
             strCmd = '_cmd_LIFT_LEGS_'
             strSubCmd = '_cmd_NA_'
             
         elif strMsg == 'PUSH_LEGS':
             strCmd = '_cmd_PUSH_LEGS_'
-            strSubCmd = '_cmd_NA_'
-
-        elif strMsg == 'PURR':
-            strCmd = '_cmd_PURR_'
             strSubCmd = '_cmd_NA_'
             
         elif strMsg == 'LOOK_DOWN':
@@ -117,21 +126,13 @@ class rbcom:
             strCmd = '_cmd_SHIFT_COM_'
             strSubCmd = '_cmd_BWD_'
             
-        elif strMsg == 'WALK_LFT':
-            strCmd = '_cmd_WALK_LFT_'
-            strSubCmd = '_cmd_NA_'
-            
-        elif strMsg == 'WALK_RGT':
-            strCmd = '_cmd_WALK_RGT_'
-            strSubCmd = '_cmd_NA_'
-            
-        elif strMsg == 'WALK_STRGT':
-            strCmd = '_cmd_WALK_STRGT_'
-            strSubCmd = '_cmd_NA_'
-            
         elif strMsg == 'KICK':
             strCmd = '_cmd_KICK_'
             strSubCmd = '_cmd_NA_'
+            
+        elif strMsg == 'PURR':
+            strCmd = '_cmd_PURR_'
+            strSubCmd = '_cmd_NA_'            
             
         # special case handling
         elif strMsg == '_NOP_':

@@ -53,32 +53,16 @@ class rbble:
         self.code = 0xFF
         
     def handle_buttons(self,msg):
-        if msg == 0x90:
-            self.btn_fwd = True
-        elif msg == 0x91:
-            self.btn_fwd = False
-        elif msg == 0x92:
-            self.btn_bwd = True
-        elif msg == 0x93:
-            self.btn_bwd = False
-        elif msg == 0xA0:
-            self.btn_lft = True
-        elif msg == 0xA1:
-            self.btn_lft = False
-        elif msg == 0xA2:
-            self.btn_rgt = True
-        elif msg == 0xA3:
-            self.btn_rgt = False
-        elif msg == 0xA4:
-            self.btn_fn0 = True
-        elif msg == 0xA5:
-            self.btn_fn0 = False            
-        else:
-            self.btn_fwd = False
-            self.btn_bwd = False
-            self.btn_lft = False
-            self.btn_rgt = False
-            self.btn_fn0 = False
+        if (msg & 0x01) == 0x01: self.btn_fwd = True
+        else: self.btn_fwd = False
+        if (msg & 0x02) == 0x02: self.btn_bwd = True
+        else: self.btn_bwd = False
+        if (msg & 0x04) == 0x04: self.btn_lft = True
+        else: self.btn_lft = False
+        if (msg & 0x08) == 0x08: self.btn_rgt = True
+        else: self.btn_rgt = False
+        if (msg & 0x10) == 0x10: self.btn_fn0 = True
+        else: self.btn_fn0 = False         
         
     def handle_command_raw(self, msg):
         self.code = msg
@@ -141,7 +125,7 @@ if __name__ == '__main__':
         msg_server = asyncio.create_task(b.msg_handler())
         
         while True:
-            print(b.btn_fwd, b.btn_bwd, b.btn_lft, b.btn_rgt)
+            print(b.btn_fwd, b.btn_bwd, b.btn_lft, b.btn_rgt, b.btn_fn0)
             await asyncio.sleep(1)
         await msg_server 
 
