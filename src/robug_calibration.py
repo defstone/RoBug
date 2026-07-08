@@ -17,25 +17,18 @@ import json
 
 class rbcal:
     
-    def __init__(self): 
-        with open('robug_calibration.json', 'rt') as f:
-            self.calib_data = json.load(f)
-            self.servo_offs  = self.calib_data['robug_calibration_data']['servo_offs']
-            self.servo_gain = self.calib_data['robug_calibration_data']['servo_gain']            
-        
+    def __init__(self):
+        try:
+            with open('robug_calibration.json', 'rt') as f:
+                self.calib_data = json.load(f)
+                self.servo_offs = self.calib_data['robug_calibration_data']['servo_offs']
+                self.servo_gain = self.calib_data['robug_calibration_data']['servo_gain']
+        except:
+            self.servo_offs = [0, 0, 0, 0, 0, 0, 0, 0]
+            self.servo_gain = [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]            
+
 if __name__ == '__main__':
-    bInit = False
-    if bInit:
-        data = {
-            'robug_calibration_data':{
-                'servo_offs': [  60,  -10,   20,   -0,  -50,  -30,   30,  -25],
-                'servo_gain': [1.07, 1.05, 1.03, 1.05, 1.00, 1.00, 1.05, 1.05]
-                }
-            } 
-        with open('robug_calibration.json', 'wt') as f:
-            print(json.dumps(data))
-            json.dump(data, f)
-            
+    
     cal = rbcal()
     print(cal.servo_offs)
     print(cal.servo_gain)
